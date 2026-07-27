@@ -1,38 +1,32 @@
-import Link from "next/link";
-import { getJournalDetailPath } from "../actions/paths";
-import type { JournalEntry } from "../types";
+import type { JournalFrontMatter } from "../types";
 import { formatJournalDate, formatJournalDateTime } from "./formatJournalDate";
 import { JournalStatusBadges } from "./JournalStatusBadges";
 
-interface JournalCardProps {
-    entry: JournalEntry;
+interface JournalMetadataProps {
+    frontMatter: JournalFrontMatter;
 }
 
 /**
- * Read-only presentational summary of a single journal entry: title
- * (linked to its detail page), journal date, last-updated time, tags,
- * and its favorite/pinned/archived state. Deliberately never renders
- * `entry.content`.
+ * Full metadata header for a single journal entry: title, journal
+ * date, created/updated timestamps, tags, and favorite/pinned/archived
+ * state. Read-only — renders no editing controls.
  */
-export function JournalCard({ entry }: JournalCardProps) {
-    const { frontMatter } = entry;
-
+export function JournalMetadata({ frontMatter }: JournalMetadataProps) {
     return (
-        <article className="flex flex-col gap-2 rounded-lg border border-black/10 p-4 dark:border-white/15">
+        <header className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-2">
-                <h2 className="text-lg font-semibold">
-                    <Link href={getJournalDetailPath(frontMatter.id)} className="hover:underline">
-                        {frontMatter.title}
-                    </Link>
-                </h2>
-
+                <h1 className="text-2xl font-bold">{frontMatter.title}</h1>
                 <JournalStatusBadges frontMatter={frontMatter} />
             </div>
 
-            <dl className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-black/60 dark:text-white/60">
+            <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-black/60 dark:text-white/60">
                 <div className="flex gap-1">
                     <dt className="font-medium">Journal date:</dt>
                     <dd>{formatJournalDate(frontMatter.journalDate)}</dd>
+                </div>
+                <div className="flex gap-1">
+                    <dt className="font-medium">Created:</dt>
+                    <dd>{formatJournalDateTime(frontMatter.createdAt)}</dd>
                 </div>
                 <div className="flex gap-1">
                     <dt className="font-medium">Last updated:</dt>
@@ -49,6 +43,6 @@ export function JournalCard({ entry }: JournalCardProps) {
                     ))}
                 </ul>
             )}
-        </article>
+        </header>
     );
 }

@@ -4,3 +4,8 @@ export { EmptyState } from "./EmptyState";
 export { CreateJournalButton } from "./CreateJournalButton";
 export { CreateJournalDialog } from "./CreateJournalDialog";
 export { CreateJournalForm } from "./CreateJournalForm";
+export { JournalDetail } from "./JournalDetail";
+export { JournalMetadata } from "./JournalMetadata";
+export { JournalMarkdown } from "./JournalMarkdown";
+export { JournalStatusBadges } from "./JournalStatusBadges";
+export { formatJournalDate, formatJournalDateTime } from "./formatJournalDate";
