@@ -14,3 +14,6 @@ export { MarkdownEditor } from "./MarkdownEditor";
 export { SaveIndicator, type SaveStatus } from "./SaveIndicator";
 export { UnsavedChangesGuard } from "./UnsavedChangesGuard";
 export { journalEditorCommands } from "./editorCommands";
+export { JournalMetadataEditor } from "./JournalMetadataEditor";
+export { MetadataPanel, type MetadataFormValues } from "./MetadataPanel";
+export { TagsInput } from "./TagsInput";

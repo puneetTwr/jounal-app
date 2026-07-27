@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type MouseEvent, type ReactNode, useCallback, useState, useTransition } from "react";
+import { type MouseEvent, useCallback, useState, useTransition } from "react";
 import { updateJournalContent } from "../actions/updateJournalContent";
 import { JOURNAL_LIST_PATH } from "../actions/paths";
 import { MarkdownEditor } from "./MarkdownEditor";
@@ -12,11 +12,15 @@ interface JournalBodyEditorProps {
     id: string;
     initialContent: string;
     /**
-     * Rendered between the nav/save row and the editor — used to slot
-     * in JournalMetadata (a Server Component) without this Client
-     * Component needing to import it directly.
+     * Whether the sibling metadata editor (JournalMetadataEditor) has
+     * unsaved changes. This component owns the page's one "Back to
+     * Journals" link and its one unsaved-changes guard, so it needs to
+     * know about metadata's dirty state too, not just its own — without
+     * this, editing the title/tags and clicking "Back to Journals"
+     * would silently discard that work with no warning. Editing/saving
+     * behavior for the Markdown body itself is unchanged.
      */
-    children: ReactNode;
+    isMetadataDirty?: boolean;
 }
 
 const UNSAVED_CHANGES_PROMPT = "You have unsaved changes. Leave without saving?";
@@ -28,7 +32,7 @@ const UNSAVED_CHANGES_PROMPT = "You have unsaved changes. Leave without saving?"
  * rather than tracked as a separate flag, so it can never drift out of
  * sync with what's actually been saved.
  */
-export function JournalBodyEditor({ id, initialContent, children }: JournalBodyEditorProps) {
+export function JournalBodyEditor({ id, initialContent, isMetadataDirty = false }: JournalBodyEditorProps) {
     const [content, setContent] = useState(initialContent);
     const [savedContent, setSavedContent] = useState(initialContent);
     const [status, setStatus] = useState<SaveStatus>("idle");
@@ -36,6 +40,7 @@ export function JournalBodyEditor({ id, initialContent, children }: JournalBodyE
     const [isPending, startTransition] = useTransition();
 
     const isDirty = content !== savedContent;
+    const hasAnyUnsavedChanges = isDirty || isMetadataDirty;
 
     const handleContentChange = useCallback((nextValue?: string) => {
         setContent(nextValue ?? "");
@@ -63,16 +68,16 @@ export function JournalBodyEditor({ id, initialContent, children }: JournalBodyE
 
     const handleBackLinkClick = useCallback(
         (event: MouseEvent<HTMLAnchorElement>) => {
-            if (isDirty && !window.confirm(UNSAVED_CHANGES_PROMPT)) {
+            if (hasAnyUnsavedChanges && !window.confirm(UNSAVED_CHANGES_PROMPT)) {
                 event.preventDefault();
             }
         },
-        [isDirty]
+        [hasAnyUnsavedChanges]
     );
 
     return (
         <div className="flex flex-col gap-6">
-            <UnsavedChangesGuard isDirty={isDirty} />
+            <UnsavedChangesGuard isDirty={hasAnyUnsavedChanges} />
 
             <div className="flex items-center justify-between gap-2">
                 <Link
@@ -95,8 +100,6 @@ export function JournalBodyEditor({ id, initialContent, children }: JournalBodyE
                     </button>
                 </div>
             </div>
-
-            {children}
 
             <MarkdownEditor value={content} onChange={handleContentChange} />
         </div>

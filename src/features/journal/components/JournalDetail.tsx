@@ -1,32 +1,44 @@
+"use client";
+
+import { useState } from "react";
 import type { JournalEntry } from "../types";
 import { JournalBodyEditor } from "./JournalBodyEditor";
-import { JournalMetadata } from "./JournalMetadata";
+import { JournalMetadataEditor } from "./JournalMetadataEditor";
 
 interface JournalDetailProps {
     entry: JournalEntry;
 }
 
 /**
- * Composes the "back to journals" nav/save row, the read-only metadata
- * header, and the Markdown body editor for a single journal entry.
+ * Composes the metadata editor and the Markdown body editor for a
+ * single journal entry. The two are fully independent editing sessions
+ * (separate field state, separate dirty tracking, separate Save
+ * buttons/feedback) — the only thing they share is the page's one
+ * "Back to Journals" link and its one unsaved-changes guard, both owned
+ * by JournalBodyEditor. This component's only job is lifting the
+ * metadata editor's dirty flag up so it can be passed into
+ * JournalBodyEditor as `isMetadataDirty`, so that link/guard accounts
+ * for unsaved metadata changes too, not just unsaved body changes.
  *
- * JournalMetadata is passed as a child of JournalBodyEditor (a Client
- * Component) rather than imported by it directly: Server Components
- * can be rendered as children of a Client Component even though a
- * Client Component cannot import one, so JournalMetadata stays a pure
- * Server Component with zero client JS of its own, while still
- * rendering in its original visual position between the nav row and
- * the body.
- *
- * Metadata itself remains read-only this milestone — only the
- * Markdown body is editable.
+ * This is now a Client Component (it wasn't before): coordinating two
+ * sibling client islands' dirty state requires state above both of
+ * them. There's no longer a server-rendering benefit being traded away
+ * by that — JournalMetadata (this page's previous read-only, zero-JS
+ * metadata display) has been superseded here by JournalMetadataEditor,
+ * which is inherently an interactive client-side form either way.
  */
 export function JournalDetail({ entry }: JournalDetailProps) {
+    const [isMetadataDirty, setIsMetadataDirty] = useState(false);
+
     return (
         <article className="flex flex-col gap-6">
-            <JournalBodyEditor id={entry.frontMatter.id} initialContent={entry.content}>
-                <JournalMetadata frontMatter={entry.frontMatter} />
-            </JournalBodyEditor>
+            <JournalMetadataEditor entry={entry} onDirtyChange={setIsMetadataDirty} />
+
+            <JournalBodyEditor
+                id={entry.frontMatter.id}
+                initialContent={entry.content}
+                isMetadataDirty={isMetadataDirty}
+            />
         </article>
     );
 }
