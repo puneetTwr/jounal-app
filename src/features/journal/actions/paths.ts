@@ -3,16 +3,14 @@
  * revalidatePath() calls after a mutation. Centralized here so that if
  * these routes are renamed, only this file needs to change.
  *
- * ASSUMPTION: no page currently reads journal data — the only existing
- * route is the static placeholder at "/" (see src/app/page.tsx). These
- * paths anticipate the conventional routes a future journal UI
- * milestone will introduce ("/journal" as the list, "/journal/[id]" as
- * an entry's detail view) and should be revisited, and renamed here if
- * needed, once that UI actually exists.
+ * The journal list is rendered at the app root (see src/app/page.tsx).
+ * There is no journal detail route yet — getJournalDetailPath() below
+ * anticipates one for a future milestone; nothing currently navigates
+ * to the path it returns.
  */
-export const JOURNAL_LIST_PATH = "/journal";
+export const JOURNAL_LIST_PATH = "/";
 
-/** Returns the detail route path for a single journal entry. */
+/** Returns the detail route path for a single journal entry, once one exists. */
 export function getJournalDetailPath(id: string): string {
-    return `${JOURNAL_LIST_PATH}/${id}`;
+    return `/journal/${id}`;
 }

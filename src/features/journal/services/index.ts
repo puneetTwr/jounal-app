@@ -1,2 +1,2 @@
-export type { JournalService } from "./JournalService";
+export type { CreateJournalInput, JournalService } from "./JournalService";
 export { journalService } from "./JournalService";

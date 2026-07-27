@@ -1,4 +1,5 @@
 export { createJournal } from "./createJournal";
+export type { CreateJournalFormErrors, CreateJournalFormState } from "./createJournal";
 export { updateJournal } from "./updateJournal";
 export { deleteJournal } from "./deleteJournal";
 export { getJournal } from "./getJournal";
