@@ -4,16 +4,18 @@ import { JournalCard } from "./JournalCard";
 
 interface JournalListProps {
     entries: JournalEntry[];
+    /** Whether a search query or filter is currently applied — changes the empty-state message. */
+    hasActiveFilters?: boolean;
 }
 
 /**
  * Read-only presentational list of journal entries. Renders
  * EmptyState when there are none. Assumes `entries` is already in the
- * desired display order — this component does not sort.
+ * desired display order — this component does not sort or filter.
  */
-export function JournalList({ entries }: JournalListProps) {
+export function JournalList({ entries, hasActiveFilters = false }: JournalListProps) {
     if (entries.length === 0) {
-        return <EmptyState />;
+        return <EmptyState hasActiveFilters={hasActiveFilters} />;
     }
 
     return (

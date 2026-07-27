@@ -1,8 +1,31 @@
-import { listJournals } from "@/features/journal/actions";
-import { CreateJournalButton, JournalList } from "@/features/journal/components";
+import { listJournals, type JournalSearchFilters } from "@/features/journal/actions";
+import { CreateJournalButton, JournalList, SearchAndFilterBar } from "@/features/journal/components";
 
-export default async function Home() {
-  const entries = await listJournals();
+interface HomeProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function toSingleValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function parseFilters(params: Record<string, string | string[] | undefined>): JournalSearchFilters {
+  return {
+    query: toSingleValue(params.q),
+    favorite: toSingleValue(params.favorite) === "1" ? true : undefined,
+    pinned: toSingleValue(params.pinned) === "1" ? true : undefined,
+    archived: toSingleValue(params.archived) === "1" ? true : undefined,
+  };
+}
+
+export default async function Home({ searchParams }: HomeProps) {
+  const resolvedSearchParams = await searchParams;
+  const filters = parseFilters(resolvedSearchParams);
+  const entries = await listJournals(filters);
+
+  const hasActiveFilters = Boolean(
+    filters.query?.trim() || filters.favorite || filters.pinned || filters.archived
+  );
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10">
@@ -10,7 +33,15 @@ export default async function Home() {
         <h1 className="text-2xl font-bold">Journal</h1>
         <CreateJournalButton />
       </div>
-      <JournalList entries={entries} />
+
+      <SearchAndFilterBar
+        initialQuery={filters.query ?? ""}
+        initialFavorite={Boolean(filters.favorite)}
+        initialPinned={Boolean(filters.pinned)}
+        initialArchived={Boolean(filters.archived)}
+      />
+
+      <JournalList entries={entries} hasActiveFilters={hasActiveFilters} />
     </main>
   );
 }

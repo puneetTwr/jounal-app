@@ -12,4 +12,5 @@ export type {
 export { deleteJournal } from "./deleteJournal";
 export { getJournal } from "./getJournal";
 export { listJournals } from "./listJournals";
+export type { JournalSearchFilters } from "../services";
 export { JOURNAL_LIST_PATH, getJournalDetailPath } from "./paths";

@@ -21,6 +21,22 @@ export interface CreateJournalInput {
 }
 
 /**
+ * Search/filter criteria for listJournals(). `query` matches against
+ * title, Markdown content, and tags (case-insensitive, partial, and
+ * trimmed before matching); an empty/omitted query matches everything.
+ * favorite/pinned/archived are "only show entries where this flag is
+ * true" toggles — omitting one (or passing `false`) means that
+ * dimension isn't filtered at all, not "show only entries where it's
+ * false".
+ */
+export interface JournalSearchFilters {
+    query?: string;
+    favorite?: boolean;
+    pinned?: boolean;
+    archived?: boolean;
+}
+
+/**
  * Application-level use cases for working with journal entries.
  *
  * This is the only layer Server Actions are permitted to call directly
@@ -29,17 +45,23 @@ export interface CreateJournalInput {
  * filesystem, Markdown, or paths; it only composes the Journal
  * Repository.
  *
- * Beyond createJournal()'s automatic-value generation, every method
- * here delegates straight through to the repository, unchanged. That
- * is deliberate: the purpose of this layer is to establish a stable
- * boundary between Server Actions and the Repository, so that future
- * orchestration — duplicate title handling, slug generation, applying
- * templates, a Git save workflow, attachment processing, analytics —
- * has a proper home without any Server Action ever needing to change.
+ * Beyond createJournal()'s automatic-value generation and
+ * listJournals()'s search/filter/sort, every method here delegates
+ * straight through to the repository, unchanged. That is deliberate:
+ * the purpose of this layer is to establish a stable boundary between
+ * Server Actions and the Repository, so that future orchestration —
+ * duplicate title handling, slug generation, applying templates, a Git
+ * save workflow, attachment processing, analytics — has a proper home
+ * without any Server Action ever needing to change.
  */
 export interface JournalService {
-    /** Lists every journal entry. */
-    listJournals(): Promise<JournalEntry[]>;
+    /**
+     * Lists journal entries, optionally narrowed by search/filter
+     * criteria, always ordered pinned-first then by journal date
+     * descending. Omitting `filters` (or passing an empty object)
+     * returns every entry.
+     */
+    listJournals(filters?: JournalSearchFilters): Promise<JournalEntry[]>;
 
     /** Returns the journal entry with the given id, or null if none exists. */
     getJournal(id: string): Promise<JournalEntry | null>;
@@ -78,6 +100,47 @@ function compareByPinnedThenJournalDateDescending(a: JournalEntry, b: JournalEnt
     return b.frontMatter.journalDate.localeCompare(a.frontMatter.journalDate);
 }
 
+/** Trims and lowercases a raw search query for case-insensitive, partial matching. */
+function normalizeSearchQuery(query: string | undefined): string {
+    return (query ?? "").trim().toLowerCase();
+}
+
+/**
+ * Whether an entry's title, content, or tags contain the normalized
+ * query as a substring (case-insensitive, partial match). An empty
+ * query matches every entry.
+ */
+function matchesQuery(entry: JournalEntry, normalizedQuery: string): boolean {
+    if (normalizedQuery.length === 0) {
+        return true;
+    }
+
+    const titleMatches = entry.frontMatter.title.toLowerCase().includes(normalizedQuery);
+    const contentMatches = entry.content.toLowerCase().includes(normalizedQuery);
+    const tagMatches = entry.frontMatter.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery));
+
+    return titleMatches || contentMatches || tagMatches;
+}
+
+/**
+ * Whether an entry satisfies the favorite/pinned/archived filters.
+ * Each filter is a "must be true" toggle: omitting one (or passing
+ * `false`) means that dimension isn't filtered at all.
+ */
+function matchesFlagFilters(entry: JournalEntry, filters: JournalSearchFilters): boolean {
+    if (filters.favorite && !entry.frontMatter.favorite) {
+        return false;
+    }
+    if (filters.pinned && !entry.frontMatter.pinned) {
+        return false;
+    }
+    if (filters.archived && !entry.frontMatter.archived) {
+        return false;
+    }
+
+    return true;
+}
+
 /** Builds a brand-new JournalEntry from minimal input, stamping every automatic field. */
 function buildNewJournalEntry(input: CreateJournalInput): JournalEntry {
     const now = new Date().toISOString();
@@ -100,9 +163,19 @@ function buildNewJournalEntry(input: CreateJournalInput): JournalEntry {
 }
 
 export const journalService: JournalService = {
-    listJournals: async () => {
+    listJournals: async (filters = {}) => {
+        // journalRepository.listEntries() already reads and parses every
+        // file's full content in one pass; filtering here afterward, on
+        // the array already in memory, reads each file exactly once —
+        // never re-opens a file to check content a second time.
         const entries = await journalRepository.listEntries();
-        return [...entries].sort(compareByPinnedThenJournalDateDescending);
+        const normalizedQuery = normalizeSearchQuery(filters.query);
+
+        const filtered = entries.filter(
+            (entry) => matchesQuery(entry, normalizedQuery) && matchesFlagFilters(entry, filters)
+        );
+
+        return filtered.sort(compareByPinnedThenJournalDateDescending);
     },
     getJournal: (id) => journalRepository.getEntry(id),
     createJournal: async (input) => {
