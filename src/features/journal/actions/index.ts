@@ -1,6 +1,8 @@
 export { createJournal } from "./createJournal";
 export type { CreateJournalFormErrors, CreateJournalFormState } from "./createJournal";
 export { updateJournal } from "./updateJournal";
+export { updateJournalContent } from "./updateJournalContent";
+export type { UpdateJournalContentResult } from "./updateJournalContent";
 export { deleteJournal } from "./deleteJournal";
 export { getJournal } from "./getJournal";
 export { listJournals } from "./listJournals";

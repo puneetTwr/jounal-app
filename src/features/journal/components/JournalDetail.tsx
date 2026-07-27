@@ -1,7 +1,5 @@
-import Link from "next/link";
-import { JOURNAL_LIST_PATH } from "../actions/paths";
 import type { JournalEntry } from "../types";
-import { JournalMarkdown } from "./JournalMarkdown";
+import { JournalBodyEditor } from "./JournalBodyEditor";
 import { JournalMetadata } from "./JournalMetadata";
 
 interface JournalDetailProps {
@@ -9,24 +7,26 @@ interface JournalDetailProps {
 }
 
 /**
- * Read-only detail view of a single journal entry: a "back to
- * journals" link, its full metadata, and its Markdown body. Renders no
- * editing controls — this is the permanent foundation editing will be
- * layered onto in a future milestone, not the editing UI itself.
+ * Composes the "back to journals" nav/save row, the read-only metadata
+ * header, and the Markdown body editor for a single journal entry.
+ *
+ * JournalMetadata is passed as a child of JournalBodyEditor (a Client
+ * Component) rather than imported by it directly: Server Components
+ * can be rendered as children of a Client Component even though a
+ * Client Component cannot import one, so JournalMetadata stays a pure
+ * Server Component with zero client JS of its own, while still
+ * rendering in its original visual position between the nav row and
+ * the body.
+ *
+ * Metadata itself remains read-only this milestone — only the
+ * Markdown body is editable.
  */
 export function JournalDetail({ entry }: JournalDetailProps) {
     return (
         <article className="flex flex-col gap-6">
-            <Link
-                href={JOURNAL_LIST_PATH}
-                className="w-fit text-sm font-medium text-black/60 hover:underline dark:text-white/60"
-            >
-                ← Back to Journals
-            </Link>
-
-            <JournalMetadata frontMatter={entry.frontMatter} />
-
-            <JournalMarkdown content={entry.content} />
+            <JournalBodyEditor id={entry.frontMatter.id} initialContent={entry.content}>
+                <JournalMetadata frontMatter={entry.frontMatter} />
+            </JournalBodyEditor>
         </article>
     );
 }

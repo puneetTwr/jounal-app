@@ -9,3 +9,8 @@ export { JournalMetadata } from "./JournalMetadata";
 export { JournalMarkdown } from "./JournalMarkdown";
 export { JournalStatusBadges } from "./JournalStatusBadges";
 export { formatJournalDate, formatJournalDateTime } from "./formatJournalDate";
+export { JournalBodyEditor } from "./JournalBodyEditor";
+export { MarkdownEditor } from "./MarkdownEditor";
+export { SaveIndicator, type SaveStatus } from "./SaveIndicator";
+export { UnsavedChangesGuard } from "./UnsavedChangesGuard";
+export { journalEditorCommands } from "./editorCommands";
