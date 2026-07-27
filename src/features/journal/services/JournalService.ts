@@ -35,8 +35,31 @@ export interface JournalService {
     deleteJournal(id: string): Promise<void>;
 }
 
+/**
+ * Orders journal entries for display: pinned entries first, then by
+ * journal date descending (newest first). journalDate is an ISO
+ * "YYYY-MM-DD" string, so lexicographic comparison already matches
+ * chronological order.
+ *
+ * This is a presentation-ordering business rule, not a storage
+ * concern — the Repository makes no ordering guarantee, so it lives
+ * here rather than in the Repository or in a UI component, where every
+ * future consumer of listJournals() would otherwise have to re-derive
+ * it.
+ */
+function compareByPinnedThenJournalDateDescending(a: JournalEntry, b: JournalEntry): number {
+    if (a.frontMatter.pinned !== b.frontMatter.pinned) {
+        return a.frontMatter.pinned ? -1 : 1;
+    }
+
+    return b.frontMatter.journalDate.localeCompare(a.frontMatter.journalDate);
+}
+
 export const journalService: JournalService = {
-    listJournals: () => journalRepository.listEntries(),
+    listJournals: async () => {
+        const entries = await journalRepository.listEntries();
+        return [...entries].sort(compareByPinnedThenJournalDateDescending);
+    },
     getJournal: (id) => journalRepository.getEntry(id),
     createJournal: (entry) => journalRepository.createEntry(entry),
     updateJournal: (entry) => journalRepository.updateEntry(entry),
