@@ -18,3 +18,5 @@ export {
 } from "./errors";
 export type { JournalRepository } from "./repository";
 export { journalRepository } from "./repository";
+export type { JournalService } from "./services";
+export { journalService } from "./services";
