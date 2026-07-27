@@ -8,6 +8,10 @@ Accepted
 
 2026-07-27
 
+## Amendment History
+
+**2026-07-27 — Externalized content repository.** When this ADR was first accepted, it assumed journal content lived inside this application's own repository, on the same local filesystem path the application's source code occupies. That assumption has been replaced: journal content now lives in a separate, private Git repository, external to the application's codebase, located at whatever path the application is configured to look at. The application's own repository and the content repository are two independent things with two independent Git histories. This amendment updates the passages below that described the old, single-repository assumption; it does not change the underlying philosophy this ADR establishes — local-first operation, Markdown as the canonical format, and Git as the version history mechanism all remain exactly as decided. Passages changed by this amendment are marked inline with **(Amended)**.
+
 ## Context
 
 This project is a personal journal, diary, and knowledge management application. It is built for a single user, running on infrastructure that user directly controls. It is not a multi-tenant product, it is not intended to be offered as a hosted service to others, and it is not designed for public deployment.
@@ -36,6 +40,7 @@ The application will be architected as a local-first system in which:
 4. Docker and Docker Compose are used to define and reproduce the runtime environment.
 5. No relational or document database is introduced for primary content storage.
 6. No separate backend framework or service is introduced; Next.js's built-in Route Handlers, Server Components, and Server Actions serve as the entire application layer.
+7. **(Amended)** Application code and journal content live in two separate repositories with two independent Git histories. The application does not assume its own content lives inside its own repository; instead, it operates against an external, configurable content root, and treats that root's Git history as entirely its own concern, unrelated to the history of the application's codebase.
 
 Synchronization with any remote system, including GitHub, is treated as a secondary concern that layers on top of a functioning local system. It is never a prerequisite for the application to work.
 
@@ -52,6 +57,8 @@ This framing is the lens through which every other decision in this document sho
 ### Local-first philosophy
 
 The application treats the local filesystem as authoritative. Every journal entry and note is a real file, sitting in a real directory, on disk, at all times. The application reads from and writes to this filesystem directly. There is no intermediate remote system that must be reachable for the application to function.
+
+**(Amended)** That directory is not assumed to live inside the application's own repository. The application operates against an external, configurable content root — a separate directory tree, itself the working copy of its own private Git repository, that the application is pointed at rather than one it owns or ships with. This does not weaken the local-first premise: the content root is still a real location on the local filesystem, still read from and written to directly, and still fully usable offline. What changes is only that the application's codebase and the user's journal content are no longer assumed to be the same repository, or even required to sit under the same parent directory.
 
 This has a direct, practical consequence: the application must continue to work with no internet connection at all. Writing a journal entry, editing a note, and searching existing content must all work identically whether the machine is online or offline. Synchronization with GitHub, when it happens, is something that occurs in addition to normal operation, not something normal operation depends on. If GitHub is unreachable, slow, or discontinued entirely, the application continues to function exactly as before, because the local files were never contingent on that remote system existing.
 
@@ -84,6 +91,8 @@ Storing this same content inside a database would work, in the narrow sense that
 
 Git is used as the application's version history mechanism, rather than building a custom history or revision system inside the application itself.
 
+**(Amended)** The Git repository being described here is the content repository — the external, private repository living at the configured content root — not the application's own codebase repository. The two are entirely independent: commits to journal entries never appear in the application's commit history, and changes to the application's source code never appear in the content repository's history. Each has its own history, its own remote (if any), and its own lifecycle, precisely because they record two unrelated kinds of change — one person's personal writing, and this piece of software's own development.
+
 Every journal entry and note change can be committed, giving the project:
 
 - **Complete history.** Every change to every file is recorded, with a timestamp and, when useful, a message describing the change.
@@ -109,7 +118,7 @@ The justification is not scalability or isolation from other tenants, since ther
 - **Portability across machines.** The user may reasonably run this application from more than one computer over its lifetime. Docker ensures the environment travels with the project rather than being reconstructed by hand each time.
 - **Avoiding dependency drift.** Without containerization, the exact versions of Node.js, system libraries, and tooling on the host machine tend to drift over time and across machines, eventually causing the project to behave differently or fail to run at all. Docker pins these dependencies explicitly.
 
-The target experience for setting up this project on a fresh machine is that cloning the repository and running Docker Compose is sufficient to get a working environment, with no separate manual installation of language runtimes or system packages required beforehand.
+The target experience for setting up this project on a fresh machine is that cloning the application repository and running Docker Compose is sufficient to get a working environment, with no separate manual installation of language runtimes or system packages required beforehand. **(Amended)** Getting a working environment is distinct from having journal content available inside it: the content repository is cloned or otherwise made available separately, at whatever location is then configured as the content root. Setting up the application does not, by itself, set up or require the presence of any particular content repository.
 
 ### Why no database
 
@@ -200,7 +209,7 @@ A conventional architecture, a dedicated backend service such as NestJS or Expre
 
 Adopting this architecture means that all future feature work is expected to build on top of Markdown files, Git history, and Next.js's built-in server-side capabilities, rather than introducing a database or a separate backend service as a default first step. Any future proposal to add either should be treated as a deliberate architectural change requiring its own justification and its own ADR, not a routine implementation detail.
 
-It also means the development environment is expected to remain reproducible through Docker, and that onboarding a fresh machine should continue to require, at most, cloning the repository and running Docker Compose. Any change that makes setup meaningfully more complex than that should be considered a regression against this decision.
+It also means the development environment is expected to remain reproducible through Docker, and that onboarding a fresh machine should continue to require, at most, cloning the application repository, making the separate content repository available at some path, and running Docker Compose against that configured content root. Any change that makes setup meaningfully more complex than that should be considered a regression against this decision.
 
 Finally, it means the "Save" workflow within the application is expected to remain tightly coupled to Git commits over time, so that version history continues to accumulate as a natural side effect of normal use, rather than becoming a separate, optional step that is easy to neglect.
 
