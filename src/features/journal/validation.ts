@@ -1,3 +1,4 @@
+import { JOURNAL_SCHEMA_VERSION } from "./constants";
 import type { JournalEntry, JournalFrontMatter } from "./types";
 
 /**
@@ -38,28 +39,208 @@ export type ValidationResult<T> =
     | { valid: false; issues: ValidationIssue[] };
 
 /**
+ * Schema versions this build of the application knows how to validate.
+ * Adding support for a future front matter schema version means adding
+ * it here and, if its rules differ from version 1, branching the field
+ * validators below on `frontMatter.version` — the public validation API
+ * does not need to change.
+ */
+const SUPPORTED_SCHEMA_VERSIONS: ReadonlyArray<JournalFrontMatter["version"]> = [
+    JOURNAL_SCHEMA_VERSION,
+];
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const ISO_DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+
+function issue(path: string, code: string, message: string): ValidationIssue {
+    return { path, code, message };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function validateSchemaVersion(
+    value: unknown,
+    path: string,
+    issues: ValidationIssue[]
+): void {
+    if (!SUPPORTED_SCHEMA_VERSIONS.includes(value as JournalFrontMatter["version"])) {
+        issues.push(
+            issue(
+                path,
+                "UNSUPPORTED_SCHEMA_VERSION",
+                `Expected one of schema versions [${SUPPORTED_SCHEMA_VERSIONS.join(", ")}], received ${JSON.stringify(value)}.`
+            )
+        );
+    }
+}
+
+function validateUuid(value: unknown, path: string, issues: ValidationIssue[]): void {
+    if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
+        issues.push(issue(path, "INVALID_UUID", `Expected a UUID string, received ${JSON.stringify(value)}.`));
+    }
+}
+
+function validateNonEmptyString(
+    value: unknown,
+    path: string,
+    code: string,
+    issues: ValidationIssue[]
+): void {
+    if (typeof value !== "string" || value.trim().length === 0) {
+        issues.push(issue(path, code, `Expected a non-empty string, received ${JSON.stringify(value)}.`));
+    }
+}
+
+function validateIsoDate(value: unknown, path: string, issues: ValidationIssue[]): void {
+    if (typeof value !== "string" || !ISO_DATE_PATTERN.test(value) || Number.isNaN(Date.parse(value))) {
+        issues.push(
+            issue(path, "INVALID_DATE", `Expected an ISO date (YYYY-MM-DD), received ${JSON.stringify(value)}.`)
+        );
+    }
+}
+
+function validateIsoDateTime(value: unknown, path: string, issues: ValidationIssue[]): void {
+    if (typeof value !== "string" || !ISO_DATE_TIME_PATTERN.test(value) || Number.isNaN(Date.parse(value))) {
+        issues.push(
+            issue(path, "INVALID_DATE_TIME", `Expected an ISO date-time string, received ${JSON.stringify(value)}.`)
+        );
+    }
+}
+
+function validateTags(value: unknown, path: string, issues: ValidationIssue[]): void {
+    if (!Array.isArray(value)) {
+        issues.push(issue(path, "INVALID_TAGS", `Expected an array of strings, received ${JSON.stringify(value)}.`));
+        return;
+    }
+
+    const seenTags = new Set<string>();
+
+    value.forEach((tag, index) => {
+        const tagPath = `${path}[${index}]`;
+
+        if (typeof tag !== "string" || tag.trim().length === 0) {
+            issues.push(
+                issue(tagPath, "INVALID_TAG", `Expected a non-empty string, received ${JSON.stringify(tag)}.`)
+            );
+            return;
+        }
+
+        if (tag !== tag.toLowerCase()) {
+            issues.push(issue(tagPath, "TAG_NOT_LOWERCASE", `Tag "${tag}" must be lowercase.`));
+        }
+
+        if (seenTags.has(tag)) {
+            issues.push(issue(tagPath, "DUPLICATE_TAG", `Tag "${tag}" is duplicated.`));
+        }
+
+        seenTags.add(tag);
+    });
+}
+
+function validateBoolean(
+    value: unknown,
+    path: string,
+    code: string,
+    issues: ValidationIssue[]
+): void {
+    if (typeof value !== "boolean") {
+        issues.push(issue(path, code, `Expected a boolean, received ${JSON.stringify(value)}.`));
+    }
+}
+
+/**
  * Validates an unknown value as a JournalFrontMatter object.
  *
- * Intended to eventually enforce: schema version correctness, UUID
- * format for `id`, ISO date format for `journalDate`/`createdAt`/
+ * Enforces: schema version support, UUID format for `id`, ISO date
+ * format for `journalDate`, ISO date-time format for `createdAt`/
  * `updatedAt`, a required non-empty `title`, unique lowercase `tags`,
  * and that `favorite`/`pinned`/`archived` are genuine booleans.
  *
  * The input is `unknown` because front matter arriving from the
  * Markdown layer is untrusted, arbitrary data — validation is what
  * establishes that it can be treated as a JournalFrontMatter, not an
- * assumption made beforehand.
- *
- * Not yet implemented; this declares the contract only.
+ * assumption made beforehand. Does not mutate the input.
  */
-export declare function validateJournalFrontMatter(
+export function validateJournalFrontMatter(
     frontMatter: unknown
-): ValidationResult<JournalFrontMatter>;
+): ValidationResult<JournalFrontMatter> {
+    if (!isRecord(frontMatter)) {
+        return {
+            valid: false,
+            issues: [
+                issue(
+                    "",
+                    "INVALID_FRONT_MATTER",
+                    `Expected an object, received ${JSON.stringify(frontMatter)}.`
+                ),
+            ],
+        };
+    }
+
+    const issues: ValidationIssue[] = [];
+
+    validateSchemaVersion(frontMatter.version, "version", issues);
+    validateUuid(frontMatter.id, "id", issues);
+    validateNonEmptyString(frontMatter.title, "title", "TITLE_REQUIRED", issues);
+    validateIsoDate(frontMatter.journalDate, "journalDate", issues);
+    validateIsoDateTime(frontMatter.createdAt, "createdAt", issues);
+    validateIsoDateTime(frontMatter.updatedAt, "updatedAt", issues);
+    validateTags(frontMatter.tags, "tags", issues);
+    validateBoolean(frontMatter.favorite, "favorite", "INVALID_FAVORITE", issues);
+    validateBoolean(frontMatter.pinned, "pinned", "INVALID_PINNED", issues);
+    validateBoolean(frontMatter.archived, "archived", "INVALID_ARCHIVED", issues);
+
+    if (issues.length > 0) {
+        return { valid: false, issues };
+    }
+
+    return { valid: true, value: frontMatter as unknown as JournalFrontMatter };
+}
 
 /**
- * Validates an unknown value as a JournalEntry, including its front
- * matter and its content.
- *
- * Not yet implemented; this declares the contract only.
+ * Validates an unknown value as a JournalEntry: its front matter,
+ * validated via validateJournalFrontMatter() with issue paths prefixed
+ * by "frontMatter.", plus its own `content`, which must be a string.
+ * Does not mutate the input.
  */
-export declare function validateJournalEntry(entry: unknown): ValidationResult<JournalEntry>;
+export function validateJournalEntry(entry: unknown): ValidationResult<JournalEntry> {
+    if (!isRecord(entry)) {
+        return {
+            valid: false,
+            issues: [issue("", "INVALID_ENTRY", `Expected an object, received ${JSON.stringify(entry)}.`)],
+        };
+    }
+
+    const frontMatterResult = validateJournalFrontMatter(entry.frontMatter);
+    const issues: ValidationIssue[] = frontMatterResult.valid
+        ? []
+        : frontMatterResult.issues.map((frontMatterIssue) => ({
+              ...frontMatterIssue,
+              path: frontMatterIssue.path ? `frontMatter.${frontMatterIssue.path}` : "frontMatter",
+          }));
+
+    if (typeof entry.content !== "string") {
+        issues.push(
+            issue(
+                "content",
+                "INVALID_CONTENT",
+                `Expected content to be a string, received ${JSON.stringify(entry.content)}.`
+            )
+        );
+    }
+
+    if (issues.length > 0) {
+        return { valid: false, issues };
+    }
+
+    return {
+        valid: true,
+        value: {
+            frontMatter: (frontMatterResult as { valid: true; value: JournalFrontMatter }).value,
+            content: entry.content as string,
+        },
+    };
+}

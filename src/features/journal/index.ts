@@ -9,3 +9,12 @@ export {
 } from "./constants";
 export type { ValidationIssue, ValidationResult } from "./validation";
 export { validateJournalFrontMatter, validateJournalEntry } from "./validation";
+export { toMarkdownDocument, toJournalEntry } from "./mapper";
+export {
+    JournalEntryNotFoundError,
+    JournalEntryAlreadyExistsError,
+    JournalValidationError,
+    JournalEntryParseError,
+} from "./errors";
+export type { JournalRepository } from "./repository";
+export { journalRepository } from "./repository";
