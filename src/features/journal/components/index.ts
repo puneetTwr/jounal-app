@@ -17,3 +17,5 @@ export { journalEditorCommands } from "./editorCommands";
 export { JournalMetadataEditor } from "./JournalMetadataEditor";
 export { MetadataPanel, type MetadataFormValues } from "./MetadataPanel";
 export { TagsInput } from "./TagsInput";
+export { DeleteJournalButton } from "./DeleteJournalButton";
+export { DeleteJournalDialog } from "./DeleteJournalDialog";
