@@ -6,10 +6,10 @@ import { FileSystemError } from "./errors";
  * Does not create missing parent directories; callers that need that
  * should call ensureDirectoryExists() first.
  */
-export async function writeTextFile(filePath: string, contents: string): Promise<void> {
+export async function writeTextFile(path: string, contents: string): Promise<void> {
   try {
-    await writeFile(filePath, contents, { encoding: "utf-8" });
+    await writeFile(path, contents, { encoding: "utf-8" });
   } catch (error) {
-    throw new FileSystemError("writeTextFile", filePath, error);
+    throw new FileSystemError("writeTextFile", path, error);
   }
 }

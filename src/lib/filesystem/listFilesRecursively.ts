@@ -7,19 +7,19 @@ import { FileSystemError } from "./errors";
  * given directory, returning full paths. Directories are traversed but
  * never included in the result themselves.
  */
-export async function listFilesRecursively(directoryPath: string): Promise<string[]> {
+export async function listFilesRecursively(path: string): Promise<string[]> {
   let entries;
 
   try {
-    entries = await readdir(directoryPath, { withFileTypes: true });
+    entries = await readdir(path, { withFileTypes: true });
   } catch (error) {
-    throw new FileSystemError("listFilesRecursively", directoryPath, error);
+    throw new FileSystemError("listFilesRecursively", path, error);
   }
 
   const filePaths: string[] = [];
 
   for (const entry of entries) {
-    const entryPath = join(directoryPath, entry.name);
+    const entryPath = join(path, entry.name);
 
     if (entry.isDirectory()) {
       const nestedFilePaths = await listFilesRecursively(entryPath);

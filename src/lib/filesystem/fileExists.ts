@@ -7,14 +7,14 @@ import { FileSystemError, hasErrorCode } from "./errors";
  * failure (e.g. a permissions error) is thrown rather than hidden
  * behind a false result.
  */
-export async function fileExists(targetPath: string): Promise<boolean> {
+export async function fileExists(path: string): Promise<boolean> {
   try {
-    await stat(targetPath);
+    await stat(path);
     return true;
   } catch (error) {
     if (hasErrorCode(error, "ENOENT")) {
       return false;
     }
-    throw new FileSystemError("fileExists", targetPath, error);
+    throw new FileSystemError("fileExists", path, error);
   }
 }

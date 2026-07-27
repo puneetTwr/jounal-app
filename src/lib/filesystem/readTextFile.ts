@@ -6,10 +6,10 @@ import { FileSystemError } from "./errors";
  * Does not interpret the contents in any way; callers are responsible
  * for parsing whatever format the file holds.
  */
-export async function readTextFile(filePath: string): Promise<string> {
+export async function readTextFile(path: string): Promise<string> {
   try {
-    return await readFile(filePath, { encoding: "utf-8" });
+    return await readFile(path, { encoding: "utf-8" });
   } catch (error) {
-    throw new FileSystemError("readTextFile", filePath, error);
+    throw new FileSystemError("readTextFile", path, error);
   }
 }

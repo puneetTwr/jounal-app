@@ -11,6 +11,6 @@ export async function copyFile(sourcePath: string, destinationPath: string): Pro
   try {
     await copyFileNative(sourcePath, destinationPath);
   } catch (error) {
-    throw new FileSystemError("copyFile", `${sourcePath} -> ${destinationPath}`, error);
+    throw new FileSystemError("copyFile", { sourcePath, destinationPath }, error);
   }
 }

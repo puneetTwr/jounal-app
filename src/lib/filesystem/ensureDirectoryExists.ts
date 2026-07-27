@@ -6,10 +6,10 @@ import { FileSystemError } from "./errors";
  * missing parent directories along the way. Resolves silently if the
  * directory already exists.
  */
-export async function ensureDirectoryExists(directoryPath: string): Promise<void> {
+export async function ensureDirectoryExists(path: string): Promise<void> {
   try {
-    await mkdir(directoryPath, { recursive: true });
+    await mkdir(path, { recursive: true });
   } catch (error) {
-    throw new FileSystemError("ensureDirectoryExists", directoryPath, error);
+    throw new FileSystemError("ensureDirectoryExists", path, error);
   }
 }

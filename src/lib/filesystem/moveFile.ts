@@ -11,6 +11,6 @@ export async function moveFile(sourcePath: string, destinationPath: string): Pro
   try {
     await rename(sourcePath, destinationPath);
   } catch (error) {
-    throw new FileSystemError("moveFile", `${sourcePath} -> ${destinationPath}`, error);
+    throw new FileSystemError("moveFile", { sourcePath, destinationPath }, error);
   }
 }
