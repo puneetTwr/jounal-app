@@ -30,6 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# logs
+*.log
+logs/
+
 # env files (can opt-in for committing if needed)
 .env*
 
@@ -39,3 +43,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# editor temp files
+*.swp
+*.swo
+*~
+.idea/
+Thumbs.db
+
+# docker runtime artifacts
+.docker/
+docker-compose.override.yml
+docker/**/volumes/
+docker/**/data/
