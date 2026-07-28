@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { templateService } from "@/features/template";
 import { JournalValidationError } from "../errors";
 import { journalService } from "../services";
 import { JOURNAL_LIST_PATH, getJournalDetailPath } from "./paths";
@@ -36,6 +37,13 @@ function readTrimmedField(formData: FormData, field: string): string {
  * created entry's detail page, using the id returned by
  * JournalService.createJournal() directly — no extra repository lookup
  * needed to find it.
+ *
+ * If a `templateId` was submitted, that template's Markdown content
+ * seeds the new entry's body (looked up via TemplateService, the same
+ * boundary JournalService sits behind). An empty, missing, or unknown
+ * `templateId` all fall back to an empty body — the same as the Blank
+ * template, and the same as before templates existed — rather than
+ * failing the whole creation over a template lookup.
  */
 export async function createJournal(
     _previousState: CreateJournalFormState,
@@ -43,6 +51,7 @@ export async function createJournal(
 ): Promise<CreateJournalFormState> {
     const title = readTrimmedField(formData, "title");
     const journalDate = readTrimmedField(formData, "journalDate");
+    const templateId = readTrimmedField(formData, "templateId");
 
     const errors: CreateJournalFormErrors = {};
 
@@ -60,7 +69,8 @@ export async function createJournal(
     let createdEntryId: string;
 
     try {
-        const entry = await journalService.createJournal({ title, journalDate });
+        const template = templateId.length > 0 ? await templateService.getTemplate(templateId) : null;
+        const entry = await journalService.createJournal({ title, journalDate, content: template?.content });
         createdEntryId = entry.frontMatter.id;
     } catch (error) {
         if (error instanceof JournalValidationError) {

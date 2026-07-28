@@ -7,6 +7,7 @@ export {
 export type { ValidationIssue, ValidationResult } from "./validation";
 export { validateTemplateFrontMatter, validateTemplateEntry } from "./validation";
 export { toMarkdownDocument, toTemplateEntry } from "./mapper";
+export { applyTemplateVariables } from "./variables";
 export {
     TemplateNotFoundError,
     TemplateAlreadyExistsError,

@@ -1,12 +1,28 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { listTemplatesAction } from "@/features/template/actions";
+import type { TemplateEntry } from "@/features/template";
+import { Skeleton } from "@/components/ui";
 import { createJournal, type CreateJournalFormState } from "../actions/createJournal";
 
 const initialState: CreateJournalFormState = { errors: {} };
 
 interface CreateJournalFormProps {
     onCancel: () => void;
+}
+
+/** Name matched (case-insensitively) to pick the default template selection. */
+const DEFAULT_TEMPLATE_NAME = "blank";
+
+/**
+ * Picks which template should be selected by default: the one named
+ * "Blank" if it exists, otherwise the first template in the list, or
+ * "" if no templates were loaded at all.
+ */
+function pickDefaultTemplateId(templates: TemplateEntry[]): string {
+    const blank = templates.find((template) => template.frontMatter.name.trim().toLowerCase() === DEFAULT_TEMPLATE_NAME);
+    return (blank ?? templates[0])?.frontMatter.id ?? "";
 }
 
 /**
@@ -34,9 +50,64 @@ function todayAsIsoDate(): string {
  */
 export function CreateJournalForm({ onCancel }: CreateJournalFormProps) {
     const [state, formAction, isPending] = useActionState(createJournal, initialState);
+    const [templates, setTemplates] = useState<TemplateEntry[]>([]);
+    const [selectedTemplateId, setSelectedTemplateId] = useState("");
+    const [templatesLoaded, setTemplatesLoaded] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        listTemplatesAction()
+            .then((loadedTemplates) => {
+                if (cancelled) return;
+                setTemplates(loadedTemplates);
+                setSelectedTemplateId(pickDefaultTemplateId(loadedTemplates));
+            })
+            .finally(() => {
+                if (!cancelled) setTemplatesLoaded(true);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     return (
         <form action={formAction} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+                <label htmlFor="journal-template" className="text-sm font-medium">
+                    Template
+                </label>
+                {templatesLoaded ? (
+                    <select
+                        id="journal-template"
+                        name="templateId"
+                        value={selectedTemplateId}
+                        onChange={(event) => setSelectedTemplateId(event.target.value)}
+                        disabled={isPending}
+                        className="rounded border border-black/20 px-3 py-2 disabled:opacity-50 dark:border-white/20 dark:bg-neutral-900"
+                    >
+                        {templates.length === 0 && <option value="">No templates available</option>}
+                        {templates.map((template) => (
+                            <option key={template.frontMatter.id} value={template.frontMatter.id}>
+                                {template.frontMatter.name}
+                            </option>
+                        ))}
+                    </select>
+                ) : (
+                    <>
+                        {/* Same footprint as the eventual <select>, so nothing shifts
+                            layout when it swaps in — no placeholder option value is
+                            ever rendered, only its shape. */}
+                        <Skeleton className="h-[42px] w-full" />
+                        <input type="hidden" name="templateId" value="" />
+                        <span role="status" className="sr-only">
+                            Loading templates…
+                        </span>
+                    </>
+                )}
+            </div>
+
             <div className="flex flex-col gap-1">
                 <label htmlFor="journal-title" className="text-sm font-medium">
                     Title
