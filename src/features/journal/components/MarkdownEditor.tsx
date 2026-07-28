@@ -27,13 +27,14 @@ interface MarkdownEditorProps {
  * a Client Component ("use client" above); Next.js's App Router
  * rejects `ssr: false` dynamic imports inside Server Components.
  *
- * The editor's own chrome is fixed to light mode for now (see
- * `data-color-mode`) — theming it to follow the app's dark mode is out
- * of scope for this Markdown-editing milestone.
+ * `data-color-mode="auto"` uses the editor's own built-in dark theme
+ * and switches with the `prefers-color-scheme` media query — the same
+ * signal `globals.css` uses for the rest of the app's dark mode, and
+ * there's no manual light/dark toggle here to keep in sync with.
  */
 export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     return (
-        <div data-color-mode="light">
+        <div data-color-mode="auto">
             <MDEditor
                 value={value}
                 onChange={onChange}

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { JournalValidationError } from "../errors";
 import { journalService } from "../services";
-import { JOURNAL_LIST_PATH } from "./paths";
+import { JOURNAL_LIST_PATH, getJournalDetailPath } from "./paths";
 
 export interface CreateJournalFormErrors {
     title?: string;
@@ -32,11 +32,10 @@ function readTrimmedField(formData: FormData, field: string): string {
  * date input already constrains the format) and any other unexpected
  * failure both collapse to one generic message.
  *
- * On success, revalidates the journal list and redirects there. There
- * is no journal detail route yet, so this is the "no detail page
- * implemented" fallback described in this feature's requirements; once
- * one exists, the redirect target here should become that entry's
- * detail path instead.
+ * On success, revalidates the journal list and redirects to the newly
+ * created entry's detail page, using the id returned by
+ * JournalService.createJournal() directly — no extra repository lookup
+ * needed to find it.
  */
 export async function createJournal(
     _previousState: CreateJournalFormState,
@@ -58,8 +57,11 @@ export async function createJournal(
         return { errors };
     }
 
+    let createdEntryId: string;
+
     try {
-        await journalService.createJournal({ title, journalDate });
+        const entry = await journalService.createJournal({ title, journalDate });
+        createdEntryId = entry.frontMatter.id;
     } catch (error) {
         if (error instanceof JournalValidationError) {
             return {
@@ -73,5 +75,5 @@ export async function createJournal(
     }
 
     revalidatePath(JOURNAL_LIST_PATH);
-    redirect(JOURNAL_LIST_PATH);
+    redirect(getJournalDetailPath(createdEntryId));
 }

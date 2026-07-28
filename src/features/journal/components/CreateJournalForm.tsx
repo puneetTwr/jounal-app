@@ -10,6 +10,19 @@ interface CreateJournalFormProps {
 }
 
 /**
+ * Today's date as a local YYYY-MM-DD string, matching what a `type="date"`
+ * input expects. Built from local getters (not `toISOString()`, which is
+ * UTC and can land on the wrong day depending on the user's timezone).
+ */
+function todayAsIsoDate(): string {
+    const now = new Date();
+    const year = String(now.getFullYear()).padStart(4, "0");
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+/**
  * Minimal creation form: title and journal date only. Every other
  * JournalFrontMatter field is generated server-side by
  * JournalService.createJournal() — this form never collects them.
@@ -55,6 +68,7 @@ export function CreateJournalForm({ onCancel }: CreateJournalFormProps) {
                     name="journalDate"
                     type="date"
                     required
+                    defaultValue={todayAsIsoDate()}
                     disabled={isPending}
                     aria-invalid={Boolean(state.errors.journalDate)}
                     aria-describedby={state.errors.journalDate ? "journal-date-error" : undefined}
