@@ -1,8 +1,6 @@
 import {
     isRecord,
     issue,
-    validateBoolean,
-    validateIsoDate,
     validateIsoDateTime,
     validateNonEmptyString,
     validateTags,
@@ -10,8 +8,8 @@ import {
     type ValidationIssue,
     type ValidationResult,
 } from "@/lib/validation";
-import { JOURNAL_SCHEMA_VERSION } from "./constants";
-import type { JournalEntry, JournalFrontMatter } from "./types";
+import { TEMPLATE_SCHEMA_VERSION } from "./constants";
+import type { TemplateEntry, TemplateFrontMatter } from "./types";
 
 export type { ValidationIssue, ValidationResult };
 
@@ -22,8 +20,8 @@ export type { ValidationIssue, ValidationResult };
  * validators below on `frontMatter.version` — the public validation API
  * does not need to change.
  */
-const SUPPORTED_SCHEMA_VERSIONS: ReadonlyArray<JournalFrontMatter["version"]> = [
-    JOURNAL_SCHEMA_VERSION,
+const SUPPORTED_SCHEMA_VERSIONS: ReadonlyArray<TemplateFrontMatter["version"]> = [
+    TEMPLATE_SCHEMA_VERSION,
 ];
 
 function validateSchemaVersion(
@@ -31,7 +29,7 @@ function validateSchemaVersion(
     path: string,
     issues: ValidationIssue[]
 ): void {
-    if (!SUPPORTED_SCHEMA_VERSIONS.includes(value as JournalFrontMatter["version"])) {
+    if (!SUPPORTED_SCHEMA_VERSIONS.includes(value as TemplateFrontMatter["version"])) {
         issues.push(
             issue(
                 path,
@@ -42,22 +40,30 @@ function validateSchemaVersion(
     }
 }
 
+/** Validates the optional `description` field: if present at all, it must be a string. */
+function validateOptionalDescription(value: unknown, path: string, issues: ValidationIssue[]): void {
+    if (value !== undefined && typeof value !== "string") {
+        issues.push(
+            issue(path, "INVALID_DESCRIPTION", `Expected a string, received ${JSON.stringify(value)}.`)
+        );
+    }
+}
+
 /**
- * Validates an unknown value as a JournalFrontMatter object.
+ * Validates an unknown value as a TemplateFrontMatter object.
  *
- * Enforces: schema version support, UUID format for `id`, ISO date
- * format for `journalDate`, ISO date-time format for `createdAt`/
- * `updatedAt`, a required non-empty `title`, unique lowercase `tags`,
- * and that `favorite`/`pinned`/`archived` are genuine booleans.
+ * Enforces: schema version support, UUID format for `id`, a required
+ * non-empty `name`, an optional string `description`, ISO date-time
+ * format for `createdAt`/`updatedAt`, and unique lowercase `tags`.
  *
  * The input is `unknown` because front matter arriving from the
  * Markdown layer is untrusted, arbitrary data — validation is what
- * establishes that it can be treated as a JournalFrontMatter, not an
+ * establishes that it can be treated as a TemplateFrontMatter, not an
  * assumption made beforehand. Does not mutate the input.
  */
-export function validateJournalFrontMatter(
+export function validateTemplateFrontMatter(
     frontMatter: unknown
-): ValidationResult<JournalFrontMatter> {
+): ValidationResult<TemplateFrontMatter> {
     if (!isRecord(frontMatter)) {
         return {
             valid: false,
@@ -75,29 +81,26 @@ export function validateJournalFrontMatter(
 
     validateSchemaVersion(frontMatter.version, "version", issues);
     validateUuid(frontMatter.id, "id", issues);
-    validateNonEmptyString(frontMatter.title, "title", "TITLE_REQUIRED", issues);
-    validateIsoDate(frontMatter.journalDate, "journalDate", issues);
+    validateNonEmptyString(frontMatter.name, "name", "NAME_REQUIRED", issues);
+    validateOptionalDescription(frontMatter.description, "description", issues);
     validateIsoDateTime(frontMatter.createdAt, "createdAt", issues);
     validateIsoDateTime(frontMatter.updatedAt, "updatedAt", issues);
     validateTags(frontMatter.tags, "tags", issues);
-    validateBoolean(frontMatter.favorite, "favorite", "INVALID_FAVORITE", issues);
-    validateBoolean(frontMatter.pinned, "pinned", "INVALID_PINNED", issues);
-    validateBoolean(frontMatter.archived, "archived", "INVALID_ARCHIVED", issues);
 
     if (issues.length > 0) {
         return { valid: false, issues };
     }
 
-    return { valid: true, value: frontMatter as unknown as JournalFrontMatter };
+    return { valid: true, value: frontMatter as unknown as TemplateFrontMatter };
 }
 
 /**
- * Validates an unknown value as a JournalEntry: its front matter,
- * validated via validateJournalFrontMatter() with issue paths prefixed
+ * Validates an unknown value as a TemplateEntry: its front matter,
+ * validated via validateTemplateFrontMatter() with issue paths prefixed
  * by "frontMatter.", plus its own `content`, which must be a string.
  * Does not mutate the input.
  */
-export function validateJournalEntry(entry: unknown): ValidationResult<JournalEntry> {
+export function validateTemplateEntry(entry: unknown): ValidationResult<TemplateEntry> {
     if (!isRecord(entry)) {
         return {
             valid: false,
@@ -105,7 +108,7 @@ export function validateJournalEntry(entry: unknown): ValidationResult<JournalEn
         };
     }
 
-    const frontMatterResult = validateJournalFrontMatter(entry.frontMatter);
+    const frontMatterResult = validateTemplateFrontMatter(entry.frontMatter);
     const issues: ValidationIssue[] = frontMatterResult.valid
         ? []
         : frontMatterResult.issues.map((frontMatterIssue) => ({
@@ -130,7 +133,7 @@ export function validateJournalEntry(entry: unknown): ValidationResult<JournalEn
     return {
         valid: true,
         value: {
-            frontMatter: (frontMatterResult as { valid: true; value: JournalFrontMatter }).value,
+            frontMatter: (frontMatterResult as { valid: true; value: TemplateFrontMatter }).value,
             content: entry.content as string,
         },
     };

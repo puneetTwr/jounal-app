@@ -1,12 +1,9 @@
-import { listFilesRecursively, readTextFile } from "@/lib/filesystem";
-import { parseMarkdownDocument } from "@/lib/markdown";
+import { listMarkdownFilePaths, loadMarkdownEntryFile } from "@/lib/markdown";
 import { getJournalsDirectoryPath } from "@/lib/paths";
 import { JournalEntryParseError } from "../errors";
 import { toJournalEntry } from "../mapper";
 import type { JournalEntry } from "../types";
 import { validateJournalEntry } from "../validation";
-
-const MARKDOWN_FILE_EXTENSION = ".md";
 
 /**
  * Lists every journal entry found in the journals directory.
@@ -17,22 +14,19 @@ const MARKDOWN_FILE_EXTENSION = ".md";
  */
 export async function listEntries(): Promise<JournalEntry[]> {
     const journalsDirectory = getJournalsDirectoryPath();
-    const filePaths = await listFilesRecursively(journalsDirectory);
-    const entryFilePaths = filePaths.filter((filePath) => filePath.endsWith(MARKDOWN_FILE_EXTENSION));
+    const filePaths = await listMarkdownFilePaths(journalsDirectory);
 
     const entries: JournalEntry[] = [];
 
-    for (const filePath of entryFilePaths) {
-        const rawContents = await readTextFile(filePath);
-        const document = parseMarkdownDocument(rawContents);
-        const mapped = toJournalEntry(document);
-        const result = validateJournalEntry(mapped);
-
-        if (!result.valid) {
-            throw new JournalEntryParseError(filePath, result.issues);
-        }
-
-        entries.push(result.value);
+    for (const filePath of filePaths) {
+        entries.push(
+            await loadMarkdownEntryFile(
+                filePath,
+                toJournalEntry,
+                validateJournalEntry,
+                (path, issues) => new JournalEntryParseError(path, issues)
+            )
+        );
     }
 
     return entries;

@@ -1,8 +1,4 @@
-import type { ValidationIssue } from "./validation";
-
-function describeIssues(issues: ValidationIssue[]): string {
-    return issues.map((issue) => `${issue.path || "(root)"}: ${issue.message}`).join("; ");
-}
+import { describeIssues, type ValidationIssue } from "@/lib/validation";
 
 /**
  * Thrown when an operation requires an existing journal entry (e.g.

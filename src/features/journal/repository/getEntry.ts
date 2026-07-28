@@ -1,5 +1,5 @@
-import { fileExists, readTextFile } from "@/lib/filesystem";
-import { parseMarkdownDocument } from "@/lib/markdown";
+import { fileExists } from "@/lib/filesystem";
+import { loadMarkdownEntryFile } from "@/lib/markdown";
 import { JournalEntryParseError } from "../errors";
 import { toJournalEntry } from "../mapper";
 import type { JournalEntry } from "../types";
@@ -22,14 +22,10 @@ export async function getEntry(id: string): Promise<JournalEntry | null> {
         return null;
     }
 
-    const rawContents = await readTextFile(filePath);
-    const document = parseMarkdownDocument(rawContents);
-    const mapped = toJournalEntry(document);
-    const result = validateJournalEntry(mapped);
-
-    if (!result.valid) {
-        throw new JournalEntryParseError(filePath, result.issues);
-    }
-
-    return result.value;
+    return loadMarkdownEntryFile(
+        filePath,
+        toJournalEntry,
+        validateJournalEntry,
+        (path, issues) => new JournalEntryParseError(path, issues)
+    );
 }
