@@ -54,13 +54,14 @@ export interface JournalSearchFilters {
  * seed content, Template's pure applyTemplateVariables() string
  * substitution utility — never the Template Repository or Service.
  *
- * Beyond createJournal()'s automatic-value generation and
+ * Beyond createJournal()'s automatic-value generation (including
+ * duplicate title handling — see resolveUniqueTitle) and
  * listJournals()'s search/filter/sort, every method here delegates
  * straight through to the repository, unchanged. That is deliberate:
  * the purpose of this layer is to establish a stable boundary between
  * Server Actions and the Repository, so that future orchestration —
- * duplicate title handling, slug generation, applying templates, a Git
- * save workflow, attachment processing, analytics — has a proper home
+ * slug generation, applying templates, a Git save workflow, attachment
+ * processing, analytics — has a proper home
  * without any Server Action ever needing to change.
  */
 export interface JournalService {
@@ -187,6 +188,33 @@ function buildTemplateVariables(frontMatter: JournalFrontMatter): Record<string,
 }
 
 /**
+ * Resolves `title` against every existing entry's title (trimmed,
+ * case-insensitive) and, if it collides, appends " (2)", " (3)", etc.
+ * until it's unique. Returns `title` unchanged when there's no
+ * collision. This is what keeps same-day entries (which otherwise all
+ * default to the same ordinal-date title) from ending up with
+ * duplicate titles.
+ */
+async function resolveUniqueTitle(title: string): Promise<string> {
+    const existingTitles = new Set(
+        (await journalRepository.listEntries()).map((entry) => entry.frontMatter.title.trim().toLowerCase())
+    );
+
+    if (!existingTitles.has(title.trim().toLowerCase())) {
+        return title;
+    }
+
+    let suffix = 2;
+    let candidate = `${title} (${suffix})`;
+    while (existingTitles.has(candidate.trim().toLowerCase())) {
+        suffix += 1;
+        candidate = `${title} (${suffix})`;
+    }
+
+    return candidate;
+}
+
+/**
  * Builds a brand-new JournalEntry from minimal input, stamping every
  * automatic field, then resolving any `{{...}}` template variables in
  * the seed content against those same generated fields — this is why
@@ -233,7 +261,8 @@ export const journalService: JournalService = {
     },
     getJournal: (id) => journalRepository.getEntry(id),
     createJournal: async (input) => {
-        const entry = buildNewJournalEntry(input);
+        const title = await resolveUniqueTitle(input.title);
+        const entry = buildNewJournalEntry({ ...input, title });
         await journalRepository.createEntry(entry);
         return entry;
     },

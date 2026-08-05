@@ -1,0 +1,10 @@
+export { isGitRepository } from "./isGitRepository";
+export { initRepository } from "./initRepository";
+export { setRemoteUrl } from "./setRemoteUrl";
+export { hasUncommittedChanges } from "./hasUncommittedChanges";
+export { stageAllChanges } from "./stageAllChanges";
+export { commitAllChanges } from "./commitAllChanges";
+export { pushToRemote } from "./pushToRemote";
+export { fetchFromRemote } from "./fetchFromRemote";
+export { mergeRemoteBranch, type MergeOutcome } from "./mergeRemoteBranch";
+export { withGitLock, GitOperationInProgressError } from "./gitOperationLock";

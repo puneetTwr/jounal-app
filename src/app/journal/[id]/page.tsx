@@ -15,7 +15,7 @@ export default async function JournalDetailPage({ params }: JournalDetailPagePro
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-10">
+    <main className="mx-auto w-full max-w-6xl px-4 py-10">
       <JournalDetail entry={entry} />
     </main>
   );

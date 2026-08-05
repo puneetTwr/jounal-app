@@ -22,9 +22,16 @@ interface JournalDetailProps {
  * that link/guard accounts for unsaved metadata changes too, not just
  * unsaved body changes.
  *
- * Delete is rendered in its own separated row at the bottom, away from
- * both Save buttons, to reduce the chance of an accidental click on a
- * destructive action next to a routine one.
+ * Layout: a fixed-width metadata column beside a flexing editor column
+ * from `md` up (side-by-side; the editor gets the remaining width),
+ * collapsing to the original stacked order below `md` — metadata,
+ * then editor, then delete. DeleteJournalButton is rendered twice (one
+ * per breakpoint, toggled with `hidden`/`md:hidden`) rather than
+ * reordered with CSS, since its target position relative to the
+ * metadata card flips between "beside it" (desktop) and "after the
+ * editor" (mobile) — two different points in the DOM, not just a
+ * different visual order of the same point. Both instances share the
+ * same id/title props; only one is ever visible at a time.
  *
  * This is a Client Component (it wasn't originally): coordinating two
  * sibling client islands' dirty state requires state above both of
@@ -37,17 +44,25 @@ export function JournalDetail({ entry }: JournalDetailProps) {
     const [isMetadataDirty, setIsMetadataDirty] = useState(false);
 
     return (
-        <article className="flex flex-col gap-6">
-            <JournalMetadataEditor entry={entry} onDirtyChange={setIsMetadataDirty} />
+        <article className="flex flex-col gap-8 md:flex-row md:items-start md:gap-12">
+            <div className="flex flex-col gap-4 md:w-[360px] md:flex-none">
+                <JournalMetadataEditor entry={entry} onDirtyChange={setIsMetadataDirty} />
 
-            <JournalBodyEditor
-                id={entry.frontMatter.id}
-                initialContent={entry.content}
-                isMetadataDirty={isMetadataDirty}
-            />
+                <div className="hidden justify-end border-t border-black/10 pt-4 md:flex dark:border-white/15">
+                    <DeleteJournalButton id={entry.frontMatter.id} title={entry.frontMatter.title} />
+                </div>
+            </div>
 
-            <div className="flex justify-end border-t border-black/10 pt-4 dark:border-white/15">
-                <DeleteJournalButton id={entry.frontMatter.id} title={entry.frontMatter.title} />
+            <div className="flex min-w-0 flex-1 flex-col gap-6">
+                <JournalBodyEditor
+                    id={entry.frontMatter.id}
+                    initialContent={entry.content}
+                    isMetadataDirty={isMetadataDirty}
+                />
+
+                <div className="flex justify-end border-t border-black/10 pt-4 md:hidden dark:border-white/15">
+                    <DeleteJournalButton id={entry.frontMatter.id} title={entry.frontMatter.title} />
+                </div>
             </div>
         </article>
     );
