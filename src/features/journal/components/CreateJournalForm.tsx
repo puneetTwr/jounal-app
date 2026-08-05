@@ -116,18 +116,11 @@ export function CreateJournalForm({ onCancel }: CreateJournalFormProps) {
                     id="journal-title"
                     name="title"
                     type="text"
-                    required
                     autoFocus
                     disabled={isPending}
-                    aria-invalid={Boolean(state.errors.title)}
-                    aria-describedby={state.errors.title ? "journal-title-error" : undefined}
+                    placeholder="Defaults to today's date"
                     className="rounded border border-black/20 px-3 py-2 disabled:opacity-50 dark:border-white/20"
                 />
-                {state.errors.title && (
-                    <p id="journal-title-error" role="alert" className="text-sm text-red-600 dark:text-red-400">
-                        {state.errors.title}
-                    </p>
-                )}
             </div>
 
             <div className="flex flex-col gap-1">
