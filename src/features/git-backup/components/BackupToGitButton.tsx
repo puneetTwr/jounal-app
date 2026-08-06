@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2, UploadCloud } from "lucide-react";
 import { useCallback, useState, useTransition } from "react";
 import { backupToGit, type GitBackupResult } from "../actions";
 
@@ -20,11 +21,12 @@ const STATUS_MESSAGES: Record<Exclude<BackupStatus, "idle">, string> = {
 };
 
 /**
- * Triggers a one-shot Git backup of the entire content root: stage
- * everything, commit, push to the configured remote's `main` branch.
- * Shows a clear, permanent explanation (rather than hiding the button)
- * when the feature isn't configured yet, so a missing env var is easy
- * to notice and debug instead of looking like the feature is absent.
+ * Icon-only trigger for a one-shot Git backup of the entire content
+ * root: stage everything, commit, push to the configured remote's
+ * `main` branch. Deliberately demoted to a small, secondary affordance
+ * (icon + tooltip/aria-label, not a full labeled button) so it never
+ * competes visually with the page's actual primary action — this is
+ * an infrequent, power-user operation, not something reached for daily.
  */
 export function BackupToGitButton({ isConfigured }: BackupToGitButtonProps) {
     const [status, setStatus] = useState<BackupStatus>(isConfigured ? "idle" : "not-configured");
@@ -38,15 +40,11 @@ export function BackupToGitButton({ isConfigured }: BackupToGitButtonProps) {
     }, []);
 
     return (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
             {status !== "idle" && (
                 <p
                     role={status === "error" ? "alert" : "status"}
-                    className={
-                        status === "error"
-                            ? "text-sm text-red-600 dark:text-red-400"
-                            : "text-sm text-black/60 dark:text-white/60"
-                    }
+                    className={status === "error" ? "text-meta text-danger" : "text-meta text-muted-foreground"}
                 >
                     {STATUS_MESSAGES[status]}
                 </p>
@@ -55,9 +53,15 @@ export function BackupToGitButton({ isConfigured }: BackupToGitButtonProps) {
                 type="button"
                 onClick={handleClick}
                 disabled={!isConfigured || isPending}
-                className="rounded border border-black/20 px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-white/20"
+                title="Backup to Git"
+                aria-label="Backup to Git"
+                className="rounded-full p-2 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
             >
-                {isPending ? "Backing up…" : "Backup to Git"}
+                {isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                    <UploadCloud className="h-4 w-4" aria-hidden="true" />
+                )}
             </button>
         </div>
     );

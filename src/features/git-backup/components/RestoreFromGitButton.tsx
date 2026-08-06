@@ -1,5 +1,6 @@
 "use client";
 
+import { DownloadCloud } from "lucide-react";
 import { useState } from "react";
 import type { GitRestoreResult } from "../actions";
 import { RestoreFromGitDialog } from "./RestoreFromGitDialog";
@@ -25,24 +26,23 @@ const STATUS_MESSAGES: Record<Exclude<RestoreStatus, "idle">, string> = {
 const ALERT_STATUSES: ReadonlySet<RestoreStatus> = new Set(["conflict", "error"]);
 
 /**
- * Opens a confirmation dialog, then triggers a one-shot pull-and-merge
- * of the content root's Git history into the local working tree. Shows
- * a clear, permanent explanation (rather than hiding the button) when
- * the feature isn't configured yet, mirroring BackupToGitButton.
+ * Icon-only trigger (opens a confirmation dialog) for pulling the
+ * content root's Git history down and merging it into the local
+ * working tree. Demoted to a small, secondary affordance alongside
+ * BackupToGitButton — same rationale: infrequent and shouldn't compete
+ * visually with the page's primary action.
  */
 export function RestoreFromGitButton({ isConfigured }: RestoreFromGitButtonProps) {
     const [status, setStatus] = useState<RestoreStatus>(isConfigured ? "idle" : "not-configured");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     return (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
             {status !== "idle" && (
                 <p
                     role={ALERT_STATUSES.has(status) ? "alert" : "status"}
                     className={
-                        ALERT_STATUSES.has(status)
-                            ? "text-sm text-red-600 dark:text-red-400"
-                            : "text-sm text-black/60 dark:text-white/60"
+                        ALERT_STATUSES.has(status) ? "text-meta text-danger" : "text-meta text-muted-foreground"
                     }
                 >
                     {STATUS_MESSAGES[status]}
@@ -53,9 +53,11 @@ export function RestoreFromGitButton({ isConfigured }: RestoreFromGitButtonProps
                 aria-haspopup="dialog"
                 onClick={() => setIsDialogOpen(true)}
                 disabled={!isConfigured}
-                className="rounded border border-black/20 px-4 py-2 text-sm font-medium disabled:opacity-50 dark:border-white/20"
+                title="Restore from Git"
+                aria-label="Restore from Git"
+                className="rounded-full p-2 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
             >
-                Restore from Git
+                <DownloadCloud className="h-4 w-4" aria-hidden="true" />
             </button>
             {isDialogOpen && (
                 <RestoreFromGitDialog
