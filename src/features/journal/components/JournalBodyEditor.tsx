@@ -1,9 +1,12 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { type MouseEvent, useCallback, useState, useTransition } from "react";
+import { type MouseEvent, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { updateJournalContent } from "../actions/updateJournalContent";
 import { JOURNAL_LIST_PATH } from "../actions/paths";
+import { AUTOSAVE_DEBOUNCE_MS } from "./autosaveConfig";
+import { InsertTemplateControl } from "./InsertTemplateControl";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { SaveIndicator, type SaveStatus } from "./SaveIndicator";
 import { UnsavedChangesGuard } from "./UnsavedChangesGuard";
@@ -11,6 +14,13 @@ import { UnsavedChangesGuard } from "./UnsavedChangesGuard";
 interface JournalBodyEditorProps {
     id: string;
     initialContent: string;
+    /** Passed straight through to InsertTemplateControl to resolve `{{...}}` template variables if a template is inserted. */
+    frontMatter: {
+        title: string;
+        journalDate: string;
+        createdAt: string;
+        updatedAt: string;
+    };
     /**
      * Whether the sibling metadata editor (JournalMetadataEditor) has
      * unsaved changes. This component owns the page's one "Back to
@@ -21,26 +31,49 @@ interface JournalBodyEditorProps {
      * behavior for the Markdown body itself is unchanged.
      */
     isMetadataDirty?: boolean;
+    /** Combined save status across both editors, owned and computed by JournalDetail — this is the one indicator actually shown, next to "Back to Journals". */
+    sharedStatus: SaveStatus;
+    sharedErrorMessage?: string | null;
+    /** Reports this editor's own save status upward so JournalDetail can fold it into `sharedStatus`. */
+    onStatusChange?: (status: SaveStatus, errorMessage?: string | null) => void;
 }
 
 const UNSAVED_CHANGES_PROMPT = "You have unsaved changes. Leave without saving?";
 
 /**
  * Owns the Markdown body editing session for a single journal entry:
- * dirty tracking, the Save action, save-state feedback, and unsaved-
- * changes protection. `isDirty` is derived (content !== savedContent)
- * rather than tracked as a separate flag, so it can never drift out of
- * sync with what's actually been saved.
+ * dirty tracking, autosave, and unsaved-changes protection. `isDirty`
+ * is derived (content !== savedContent) rather than tracked as a
+ * separate flag, so it can never drift out of sync with what's
+ * actually been saved.
+ *
+ * A save sequence number guards against out-of-order responses, same
+ * reasoning as JournalMetadataEditor: a newer autosave's result always
+ * wins over an older one that resolves later.
  */
-export function JournalBodyEditor({ id, initialContent, isMetadataDirty = false }: JournalBodyEditorProps) {
+export function JournalBodyEditor({
+    id,
+    initialContent,
+    frontMatter,
+    isMetadataDirty = false,
+    sharedStatus,
+    sharedErrorMessage,
+    onStatusChange,
+}: JournalBodyEditorProps) {
     const [content, setContent] = useState(initialContent);
     const [savedContent, setSavedContent] = useState(initialContent);
     const [status, setStatus] = useState<SaveStatus>("idle");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
+    const saveSeqRef = useRef(0);
 
     const isDirty = content !== savedContent;
     const hasAnyUnsavedChanges = isDirty || isMetadataDirty;
+
+    useEffect(() => {
+        onStatusChange?.(status, errorMessage);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status, errorMessage]);
 
     const handleContentChange = useCallback((nextValue?: string) => {
         setContent(nextValue ?? "");
@@ -49,11 +82,17 @@ export function JournalBodyEditor({ id, initialContent, isMetadataDirty = false 
     }, []);
 
     const handleSave = useCallback(() => {
+        const mySeq = ++saveSeqRef.current;
+
         startTransition(async () => {
             setStatus("saving");
             setErrorMessage(null);
 
             const result = await updateJournalContent(id, content);
+
+            if (mySeq !== saveSeqRef.current) {
+                return;
+            }
 
             if (result.status === "error") {
                 setStatus("error");
@@ -65,6 +104,16 @@ export function JournalBodyEditor({ id, initialContent, isMetadataDirty = false 
             setStatus("saved");
         });
     }, [id, content]);
+
+    useEffect(() => {
+        if (!isDirty) {
+            return;
+        }
+
+        const timeoutId = setTimeout(handleSave, AUTOSAVE_DEBOUNCE_MS);
+        return () => clearTimeout(timeoutId);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [content]);
 
     const handleBackLinkClick = useCallback(
         (event: MouseEvent<HTMLAnchorElement>) => {
@@ -83,23 +132,18 @@ export function JournalBodyEditor({ id, initialContent, isMetadataDirty = false 
                 <Link
                     href={JOURNAL_LIST_PATH}
                     onClick={handleBackLinkClick}
-                    className="w-fit text-sm font-medium text-black/60 hover:underline dark:text-white/60"
+                    className="flex w-fit items-center gap-1 text-body font-medium text-muted-foreground hover:text-foreground hover:underline"
                 >
-                    ← Back to Journals
+                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                    Back to Journals
                 </Link>
 
-                <div className="flex items-center gap-3">
-                    <SaveIndicator status={status} errorMessage={errorMessage} />
-                    <button
-                        type="button"
-                        onClick={handleSave}
-                        disabled={!isDirty || isPending}
-                        className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
-                    >
-                        {isPending ? "Saving…" : "Save"}
-                    </button>
-                </div>
+                <SaveIndicator status={sharedStatus} errorMessage={sharedErrorMessage} />
             </div>
+
+            {content.trim().length === 0 && (
+                <InsertTemplateControl frontMatter={frontMatter} onInsert={handleContentChange} />
+            )}
 
             <MarkdownEditor value={content} onChange={handleContentChange} />
         </div>

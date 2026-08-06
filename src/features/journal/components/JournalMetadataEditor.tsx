@@ -1,15 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { updateJournalMetadata, type UpdateJournalMetadataErrors } from "../actions/updateJournalMetadata";
 import type { JournalEntry } from "../types";
+import { AUTOSAVE_DEBOUNCE_MS } from "./autosaveConfig";
 import { MetadataPanel, type MetadataFormValues } from "./MetadataPanel";
-import { SaveIndicator, type SaveStatus } from "./SaveIndicator";
+import type { SaveStatus } from "./SaveIndicator";
 
 interface JournalMetadataEditorProps {
     entry: JournalEntry;
     /** Reports this editor's dirty state upward so JournalBodyEditor's shared nav guard can account for it. */
     onDirtyChange?: (isDirty: boolean) => void;
+    /** Reports this editor's save status upward so JournalDetail can render one shared indicator for both editors. */
+    onStatusChange?: (status: SaveStatus, formError?: string | null) => void;
 }
 
 function toFormValues(entry: JournalEntry): MetadataFormValues {
@@ -37,27 +40,41 @@ function areValuesEqual(a: MetadataFormValues, b: MetadataFormValues): boolean {
 
 /**
  * Owns the metadata editing session for a single journal entry: field
- * state, dirty tracking (independent of the Markdown body editor), the
- * Save action, and save-state feedback. Deliberately mirrors
- * JournalBodyEditor's shape so the two save flows behave consistently
- * even though they're otherwise fully independent.
+ * state, dirty tracking (independent of the Markdown body editor), and
+ * autosave. Deliberately mirrors JournalBodyEditor's shape so the two
+ * save flows behave consistently even though they're otherwise fully
+ * independent — each still calls its own existing Server Action with
+ * its own validation/errors, autosave only changes *when* that call
+ * happens, not what it does.
  *
  * `isDirty` is derived (values compared against the last-saved values)
  * rather than tracked as a separate flag, matching JournalBodyEditor's
  * approach — it can never drift out of sync with what's actually saved.
+ *
+ * A save sequence number guards against out-of-order responses: if a
+ * newer autosave starts before an older one's request resolves, the
+ * older response is discarded on arrival rather than being allowed to
+ * overwrite `savedValues` backward with stale data.
  */
-export function JournalMetadataEditor({ entry, onDirtyChange }: JournalMetadataEditorProps) {
+export function JournalMetadataEditor({ entry, onDirtyChange, onStatusChange }: JournalMetadataEditorProps) {
     const [values, setValues] = useState<MetadataFormValues>(() => toFormValues(entry));
     const [savedValues, setSavedValues] = useState<MetadataFormValues>(() => toFormValues(entry));
     const [status, setStatus] = useState<SaveStatus>("idle");
     const [errors, setErrors] = useState<UpdateJournalMetadataErrors>({});
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
+    const saveSeqRef = useRef(0);
 
     const isDirty = !areValuesEqual(values, savedValues);
 
     useEffect(() => {
         onDirtyChange?.(isDirty);
     }, [isDirty, onDirtyChange]);
+
+    useEffect(() => {
+        onStatusChange?.(status, errors.form);
+        // Only the combination that actually changes should re-fire this.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status, errors.form]);
 
     const handleChange = useCallback((nextValues: MetadataFormValues) => {
         setValues(nextValues);
@@ -66,6 +83,8 @@ export function JournalMetadataEditor({ entry, onDirtyChange }: JournalMetadataE
     }, []);
 
     const handleSave = useCallback(() => {
+        const mySeq = ++saveSeqRef.current;
+
         startTransition(async () => {
             setStatus("saving");
             setErrors({});
@@ -74,6 +93,10 @@ export function JournalMetadataEditor({ entry, onDirtyChange }: JournalMetadataE
                 id: entry.frontMatter.id,
                 ...values,
             });
+
+            if (mySeq !== saveSeqRef.current) {
+                return;
+            }
 
             if (result.status === "error") {
                 setStatus("error");
@@ -86,27 +109,26 @@ export function JournalMetadataEditor({ entry, onDirtyChange }: JournalMetadataE
         });
     }, [entry.frontMatter.id, values]);
 
+    useEffect(() => {
+        if (!isDirty) {
+            return;
+        }
+
+        const timeoutId = setTimeout(handleSave, AUTOSAVE_DEBOUNCE_MS);
+        return () => clearTimeout(timeoutId);
+        // Re-arms whenever the values themselves change; handleSave is
+        // recreated in lockstep with values (see its own deps above), so
+        // this always schedules against the current field values.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [values]);
+
     return (
-        <section className="flex flex-col gap-4 rounded-lg border border-black/10 p-4 dark:border-white/15">
-            <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-black/60 dark:text-white/60">Details</h2>
-                <div className="flex items-center gap-3">
-                    <SaveIndicator status={status} errorMessage={errors.form} />
-                    <button
-                        type="button"
-                        onClick={handleSave}
-                        disabled={!isDirty || isPending}
-                        className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
-                    >
-                        {isPending ? "Saving…" : "Save"}
-                    </button>
-                </div>
-            </div>
+        <section className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-4">
+            <h2 className="text-meta font-semibold text-muted-foreground">Details</h2>
 
             <MetadataPanel
                 values={values}
                 onChange={handleChange}
-                disabled={isPending}
                 titleError={errors.title}
                 journalDateError={errors.journalDate}
             />

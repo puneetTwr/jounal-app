@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useId, useState, type KeyboardEvent } from "react";
 
 interface TagsInputProps {
@@ -53,7 +54,7 @@ export function TagsInput({ tags, onChange, disabled = false }: TagsInputProps) 
 
     return (
         <div className="flex flex-col gap-2">
-            <label htmlFor={inputId} className="text-sm font-medium">
+            <label htmlFor={inputId} className="text-body font-medium">
                 Tags
             </label>
 
@@ -62,7 +63,7 @@ export function TagsInput({ tags, onChange, disabled = false }: TagsInputProps) 
                     {tags.map((tag) => (
                         <li
                             key={tag}
-                            className="flex items-center gap-1 rounded-full bg-black/5 py-0.5 pl-2 pr-1 text-xs dark:bg-white/10"
+                            className="flex animate-[pop-in_150ms_ease-out] items-center gap-1 rounded-full bg-muted-foreground/10 py-0.5 pr-1 pl-2 text-meta"
                         >
                             <button
                                 type="button"
@@ -77,10 +78,10 @@ export function TagsInput({ tags, onChange, disabled = false }: TagsInputProps) 
                                 type="button"
                                 onClick={() => removeTag(tag)}
                                 disabled={disabled}
-                                className="rounded-full px-1 text-black/50 hover:bg-black/10 hover:text-black disabled:pointer-events-none dark:text-white/50 dark:hover:bg-white/10 dark:hover:text-white"
+                                className="rounded-full p-0.5 text-muted-foreground hover:bg-muted-foreground/20 hover:text-foreground disabled:pointer-events-none"
                                 aria-label={`Remove tag ${tag}`}
                             >
-                                ×
+                                <X className="h-3 w-3" aria-hidden="true" />
                             </button>
                         </li>
                     ))}
@@ -96,13 +97,13 @@ export function TagsInput({ tags, onChange, disabled = false }: TagsInputProps) 
                     onKeyDown={handleKeyDown}
                     disabled={disabled}
                     placeholder="Add a tag and press Enter"
-                    className="flex-1 rounded border border-black/20 px-3 py-2 text-sm disabled:opacity-50 dark:border-white/20"
+                    className="flex-1 rounded border border-border bg-surface px-3 py-2 text-body disabled:opacity-50"
                 />
                 <button
                     type="button"
                     onClick={addDraftTag}
                     disabled={disabled || !canAdd}
-                    className="rounded border border-black/20 px-3 py-2 text-sm font-medium disabled:opacity-50 dark:border-white/20"
+                    className="rounded border border-border px-3 py-2 text-body font-medium disabled:opacity-50"
                 >
                     Add
                 </button>

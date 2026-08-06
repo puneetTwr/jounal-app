@@ -7,7 +7,7 @@ interface SkeletonProps {
  * loaded yet. Purely a shape — pass sizing via `className` (e.g.
  * "h-4 w-32") to stand in for a line of text, a form field, a card, or
  * anything else. Uses the app's existing black/white-opacity
- * convention (see JournalMarkdown, SaveIndicator, ...) rather than a
+ * convention (see JournalCard, SaveIndicator, ...) rather than a
  * new color, and Tailwind's built-in `animate-pulse` rather than a
  * custom keyframe, so it's already theme-consistent and cheap to
  * render.

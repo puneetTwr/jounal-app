@@ -1,5 +1,6 @@
 "use client";
 
+import { Archive, Heart, Pin, Search, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -17,10 +18,18 @@ interface FilterState {
     archived: boolean;
 }
 
+type FilterFlag = "favorite" | "pinned" | "archived";
+
 const SEARCH_DEBOUNCE_MS = 300;
 
+const FILTER_CHIPS: ReadonlyArray<{ key: FilterFlag; label: string; icon: typeof Pin }> = [
+    { key: "favorite", label: "Favorite", icon: Heart },
+    { key: "pinned", label: "Pinned", icon: Pin },
+    { key: "archived", label: "Archived", icon: Archive },
+];
+
 /**
- * Search input + favorite/pinned/archived filter checkboxes + a
+ * Search input + favorite/pinned/archived filter toggle-chips + a
  * conditional "Clear filters" action.
  *
  * This component only edits the URL (via the router) — it never calls
@@ -31,8 +40,10 @@ const SEARCH_DEBOUNCE_MS = 300;
  * (UI → Server Action → Service → Repository) is unchanged.
  *
  * Only the text query is debounced (typing shouldn't push a new URL on
- * every keystroke); the checkboxes push immediately since each click
- * is already a single discrete change.
+ * every keystroke); the chips push immediately since each click is
+ * already a single discrete change. The chips are real `<button>`s
+ * with `aria-pressed` (not `<input type="checkbox">`) so they can be
+ * styled as icon toggle-chips rather than native checkboxes.
  */
 export function SearchAndFilterBar({
     initialQuery,
@@ -83,11 +94,11 @@ export function SearchAndFilterBar({
 
         return () => clearTimeout(timeoutId);
         // Only the query's own debounce timer should reset when it changes;
-        // checkbox toggles push immediately via handleFlagToggle below.
+        // chip toggles push immediately via handleFlagToggle below.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [query]);
 
-    function handleFlagToggle(flag: "favorite" | "pinned" | "archived", checked: boolean) {
+    function handleFlagToggle(flag: FilterFlag, checked: boolean) {
         const next: FilterState = {
             query,
             favorite: flag === "favorite" ? checked : favorite,
@@ -109,51 +120,55 @@ export function SearchAndFilterBar({
         router.replace(pathname);
     }
 
+    const activeFlags: Record<FilterFlag, boolean> = { favorite, pinned, archived };
     const hasActiveFilters = query.trim().length > 0 || favorite || pinned || archived;
 
     return (
         <div className="mb-6 flex flex-col gap-3">
-            <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search title, content, or tags…"
-                aria-label="Search journals"
-                className="rounded border border-black/20 px-3 py-2 text-sm dark:border-white/20"
-            />
+            <div className="relative">
+                <Search
+                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                />
+                <input
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search title, content, or tags…"
+                    aria-label="Search journals"
+                    className="w-full rounded border border-border bg-surface py-2 pr-3 pl-9 text-body"
+                />
+            </div>
 
-            <div className="flex flex-wrap items-center gap-4">
-                <label className="flex items-center gap-2 text-sm">
-                    <input
-                        type="checkbox"
-                        checked={favorite}
-                        onChange={(event) => handleFlagToggle("favorite", event.target.checked)}
-                    />
-                    Favorite
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                    <input
-                        type="checkbox"
-                        checked={pinned}
-                        onChange={(event) => handleFlagToggle("pinned", event.target.checked)}
-                    />
-                    Pinned
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                    <input
-                        type="checkbox"
-                        checked={archived}
-                        onChange={(event) => handleFlagToggle("archived", event.target.checked)}
-                    />
-                    Archived
-                </label>
+            <div className="flex flex-wrap items-center gap-2">
+                {FILTER_CHIPS.map(({ key, label, icon: Icon }) => {
+                    const isActive = activeFlags[key];
+
+                    return (
+                        <button
+                            key={key}
+                            type="button"
+                            aria-pressed={isActive}
+                            onClick={() => handleFlagToggle(key, !isActive)}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-meta font-medium ${
+                                isActive
+                                    ? "border-accent bg-accent/15 text-accent"
+                                    : "border-border text-muted-foreground hover:bg-muted-foreground/10"
+                            }`}
+                        >
+                            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                            {label}
+                        </button>
+                    );
+                })}
 
                 {hasActiveFilters && (
                     <button
                         type="button"
                         onClick={handleClearFilters}
-                        className="ml-auto text-sm font-medium text-black/60 hover:underline dark:text-white/60"
+                        className="ml-auto inline-flex items-center gap-1 text-meta font-medium text-muted-foreground hover:text-foreground"
                     >
+                        <X className="h-3.5 w-3.5" aria-hidden="true" />
                         Clear filters
                     </button>
                 )}

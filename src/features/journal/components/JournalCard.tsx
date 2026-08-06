@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { getJournalDetailPath } from "../actions/paths";
 import type { JournalEntry } from "../types";
+import { getContentPreview } from "../utils";
 import { formatJournalDate, formatJournalDateTime } from "./formatJournalDate";
+import { JournalQuickToggles } from "./JournalQuickToggles";
 import { JournalStatusBadges } from "./JournalStatusBadges";
 
 interface JournalCardProps {
@@ -9,27 +11,45 @@ interface JournalCardProps {
 }
 
 /**
- * Read-only presentational summary of a single journal entry: title
- * (linked to its detail page), journal date, last-updated time, tags,
- * and its favorite/pinned/archived state. Deliberately never renders
- * `entry.content`.
+ * Read-only presentational summary of a single journal entry: title,
+ * a short content preview, journal date, last-updated time, tags, its
+ * archived state, and pin/favorite quick-toggles.
+ *
+ * The whole card is one click target — a "stretched link" overlay
+ * (`absolute inset-0`, default stacking) rather than wrapping all the
+ * content in a real `<a>`, specifically so JournalQuickToggles' real
+ * `<button>`s can sit inside the card without nesting interactive
+ * elements inside an anchor (invalid HTML, and unreliable to click).
+ * The toggles wrapper gets `relative z-10` to paint above the overlay
+ * link; everything else is plain, unpositioned content, which the
+ * stacking rules already place below the positioned overlay link, so
+ * clicking anywhere else on the card — title, preview, dates, tags —
+ * still navigates.
  */
 export function JournalCard({ entry }: JournalCardProps) {
-    const { frontMatter } = entry;
+    const { frontMatter, content } = entry;
+    const preview = getContentPreview(content);
 
     return (
-        <article className="flex flex-col gap-2 rounded-lg border border-black/10 p-4 dark:border-white/15">
-            <div className="flex items-start justify-between gap-2">
-                <h2 className="text-lg font-semibold">
-                    <Link href={getJournalDetailPath(frontMatter.id)} className="hover:underline">
-                        {frontMatter.title}
-                    </Link>
-                </h2>
+        <article className="group relative flex flex-col gap-2 rounded-lg border border-border bg-surface p-4 transition-[box-shadow,border-color] hover:border-accent/40 hover:shadow-md">
+            <Link
+                href={getJournalDetailPath(frontMatter.id)}
+                className="absolute inset-0 z-0 rounded-lg"
+                aria-label={`Open "${frontMatter.title}"`}
+            />
 
-                <JournalStatusBadges frontMatter={frontMatter} />
+            <div className="flex items-start justify-between gap-2">
+                <h2 className="text-heading font-semibold group-hover:text-accent">{frontMatter.title}</h2>
+
+                <div className="relative z-10 flex items-center gap-1">
+                    <JournalStatusBadges frontMatter={frontMatter} />
+                    <JournalQuickToggles entry={entry} />
+                </div>
             </div>
 
-            <dl className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-black/60 dark:text-white/60">
+            {preview.length > 0 && <p className="line-clamp-2 text-body text-muted-foreground">{preview}</p>}
+
+            <dl className="flex flex-wrap gap-x-4 gap-y-1 text-meta text-muted-foreground">
                 <div className="flex gap-1">
                     <dt className="font-medium">Journal date:</dt>
                     <dd>{formatJournalDate(frontMatter.journalDate)}</dd>
@@ -43,7 +63,7 @@ export function JournalCard({ entry }: JournalCardProps) {
             {frontMatter.tags.length > 0 && (
                 <ul aria-label="Tags" className="flex flex-wrap gap-1.5">
                     {frontMatter.tags.map((tag) => (
-                        <li key={tag} className="rounded-full px-2 py-0.5 text-xs bg-black/5 dark:bg-white/10">
+                        <li key={tag} className="rounded-full bg-muted-foreground/10 px-2 py-0.5 text-meta">
                             {tag}
                         </li>
                     ))}

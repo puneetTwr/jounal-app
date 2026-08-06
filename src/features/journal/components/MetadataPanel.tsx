@@ -43,7 +43,7 @@ export function MetadataPanel({
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
-                <label htmlFor="metadata-title" className="text-sm font-medium">
+                <label htmlFor="metadata-title" className="text-body font-medium">
                     Title
                 </label>
                 <input
@@ -54,17 +54,17 @@ export function MetadataPanel({
                     disabled={disabled}
                     aria-invalid={Boolean(titleError)}
                     aria-describedby={titleError ? "metadata-title-error" : undefined}
-                    className="rounded border border-black/20 px-3 py-2 disabled:opacity-50 dark:border-white/20"
+                    className="rounded border border-border bg-surface px-3 py-2 text-body disabled:opacity-50"
                 />
                 {titleError && (
-                    <p id="metadata-title-error" role="alert" className="text-sm text-red-600 dark:text-red-400">
+                    <p id="metadata-title-error" role="alert" className="text-body text-danger">
                         {titleError}
                     </p>
                 )}
             </div>
 
             <div className="flex flex-col gap-1">
-                <label htmlFor="metadata-journal-date" className="text-sm font-medium">
+                <label htmlFor="metadata-journal-date" className="text-body font-medium">
                     Journal Date
                 </label>
                 <input
@@ -75,14 +75,10 @@ export function MetadataPanel({
                     disabled={disabled}
                     aria-invalid={Boolean(journalDateError)}
                     aria-describedby={journalDateError ? "metadata-journal-date-error" : undefined}
-                    className="rounded border border-black/20 px-3 py-2 disabled:opacity-50 dark:border-white/20"
+                    className="rounded border border-border bg-surface px-3 py-2 text-body disabled:opacity-50"
                 />
                 {journalDateError && (
-                    <p
-                        id="metadata-journal-date-error"
-                        role="alert"
-                        className="text-sm text-red-600 dark:text-red-400"
-                    >
+                    <p id="metadata-journal-date-error" role="alert" className="text-body text-danger">
                         {journalDateError}
                     </p>
                 )}
@@ -91,8 +87,8 @@ export function MetadataPanel({
             <TagsInput tags={values.tags} onChange={(tags) => updateField("tags", tags)} disabled={disabled} />
 
             <fieldset className="flex flex-wrap gap-4">
-                <legend className="mb-1 text-sm font-medium">Status</legend>
-                <label className="flex items-center gap-2 text-sm">
+                <legend className="mb-1 text-body font-medium">Status</legend>
+                <label className="flex items-center gap-2 text-body">
                     <input
                         type="checkbox"
                         checked={values.favorite}
@@ -101,7 +97,7 @@ export function MetadataPanel({
                     />
                     Favorite
                 </label>
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-body">
                     <input
                         type="checkbox"
                         checked={values.pinned}
@@ -110,7 +106,7 @@ export function MetadataPanel({
                     />
                     Pinned
                 </label>
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-body">
                     <input
                         type="checkbox"
                         checked={values.archived}

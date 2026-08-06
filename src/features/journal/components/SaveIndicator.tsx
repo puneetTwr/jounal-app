@@ -1,3 +1,5 @@
+import { AlertCircle, Check, Loader2 } from "lucide-react";
+
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 interface SaveIndicatorProps {
@@ -19,7 +21,8 @@ export function SaveIndicator({ status, errorMessage }: SaveIndicatorProps) {
 
     if (status === "saving") {
         return (
-            <p role="status" className="text-sm text-black/60 dark:text-white/60">
+            <p role="status" className="flex items-center gap-1.5 text-body text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                 Saving…
             </p>
         );
@@ -27,14 +30,16 @@ export function SaveIndicator({ status, errorMessage }: SaveIndicatorProps) {
 
     if (status === "saved") {
         return (
-            <p role="status" className="text-sm text-green-700 dark:text-green-400">
+            <p role="status" className="flex items-center gap-1.5 text-body text-success">
+                <Check className="h-3.5 w-3.5 animate-[pop-in_150ms_ease-out]" aria-hidden="true" />
                 Saved
             </p>
         );
     }
 
     return (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="flex items-center gap-1.5 text-body text-danger">
+            <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
             {errorMessage ?? "Something went wrong while saving."}
         </p>
     );

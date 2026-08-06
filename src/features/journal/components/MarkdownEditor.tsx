@@ -17,9 +17,8 @@ interface MarkdownEditorProps {
  * only touches this file.
  *
  * `preview="edit"` keeps this a raw Markdown source editor with a
- * formatting toolbar, not a live-preview/WYSIWYG surface: the detail
- * page already has JournalMarkdown for rendering saved content
- * elsewhere, so a second rendered view here would be redundant.
+ * formatting toolbar, not a live-preview/WYSIWYG surface — a separate
+ * rendered view isn't needed alongside it.
  *
  * Dynamically imported with `ssr: false` because @uiw/react-md-editor
  * reads `window`/`document` at import time and cannot run during
