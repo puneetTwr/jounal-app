@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { assertAuthenticated } from "@/lib/auth";
 import { templateService } from "@/features/template";
 import { formatOrdinalDate } from "../components/formatJournalDate";
 import { JournalValidationError } from "../errors";
@@ -59,6 +60,8 @@ export async function createJournal(
     _previousState: CreateJournalFormState,
     formData: FormData
 ): Promise<CreateJournalFormState> {
+    await assertAuthenticated();
+
     const journalDate = readTrimmedField(formData, "journalDate");
     const templateId = readTrimmedField(formData, "templateId");
 

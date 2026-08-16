@@ -1,5 +1,6 @@
 "use server";
 
+import { assertAuthenticated } from "@/lib/auth";
 import { JournalValidationError } from "../errors";
 import type { JournalEntry, JournalFrontMatter } from "../types";
 import { getJournal } from "./getJournal";
@@ -46,6 +47,8 @@ export interface UpdateJournalMetadataResult {
 export async function updateJournalMetadata(
     input: UpdateJournalMetadataInput
 ): Promise<UpdateJournalMetadataResult> {
+    await assertAuthenticated();
+
     const title = input.title.trim();
     const journalDate = input.journalDate.trim();
 

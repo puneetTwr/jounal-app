@@ -13,6 +13,7 @@ export {
     TemplateAlreadyExistsError,
     TemplateValidationError,
     TemplateParseError,
+    InvalidTemplateIdError,
 } from "./errors";
 export type { TemplateRepository } from "./repository";
 export { templateRepository } from "./repository";

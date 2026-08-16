@@ -3,6 +3,7 @@ export {
     issue,
     isRecord,
     validateUuid,
+    isValidUuid,
     validateNonEmptyString,
     validateIsoDate,
     validateIsoDateTime,

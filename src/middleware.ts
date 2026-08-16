@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { getAuthPassword } from "@/lib/config";
+import { getAuthPassword, getSessionSecret } from "@/lib/config";
 import { isValidSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth/session";
 
 const LOGIN_PATH = "/login";
@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-    const authenticated = await isValidSessionToken(token, getAuthPassword());
+    const authenticated = await isValidSessionToken(token, getAuthPassword(), getSessionSecret());
 
     if (authenticated) {
         return NextResponse.next();

@@ -17,6 +17,24 @@ export class JournalEntryNotFoundError extends Error {
     }
 }
 
+/**
+ * Thrown by getJournalEntryFilePath() when the given id is not a
+ * well-formed UUID. Every path-taking repository function (getEntry,
+ * deleteEntry, createEntry, updateEntry) routes through that helper, so
+ * this is what stops a malformed or malicious id (e.g. containing `../`)
+ * from ever being joined into a filesystem path.
+ */
+export class InvalidJournalEntryIdError extends Error {
+    public readonly id: string;
+
+    constructor(id: string) {
+        super(`"${id}" is not a valid journal entry id.`);
+        this.name = "InvalidJournalEntryIdError";
+        this.id = id;
+        Object.freeze(this);
+    }
+}
+
 /** Thrown by createEntry() when an entry with the given id already exists. */
 export class JournalEntryAlreadyExistsError extends Error {
     public readonly id: string;

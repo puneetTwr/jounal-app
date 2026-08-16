@@ -30,6 +30,7 @@ const warmAccent = { "--accent": "#e0ac6b" } as CSSProperties;
 export function LoginForm({ nextPath }: LoginFormProps) {
   const router = useRouter();
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -38,7 +39,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
     setError(null);
 
     startTransition(async () => {
-      const result = await authenticate(password);
+      const result = await authenticate(password, totpCode);
 
       if (!result.success) {
         setError(result.error ?? "Something went wrong.");
@@ -81,6 +82,26 @@ export function LoginForm({ nextPath }: LoginFormProps) {
             </div>
           )}
         </div>
+
+        <label htmlFor="totpCode" className="sr-only">
+          Authenticator code
+        </label>
+        <input
+          id="totpCode"
+          name="totpCode"
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="\d{6}"
+          maxLength={6}
+          required
+          value={totpCode}
+          onChange={(event) => setTotpCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+          placeholder="123456"
+          disabled={isPending}
+          style={monoStyle}
+          className={`mt-3 w-48 border-b border-[#f4e6d2]/30 bg-transparent px-1 py-1.5 text-center text-lg tracking-[0.3em] text-[#f4e6d2] placeholder:text-[#f4e6d2]/35 focus:border-[#f4e6d2]/70 ${isPending ? "opacity-40" : ""}`}
+        />
       </form>
 
       <div aria-live="polite" className="min-h-4">

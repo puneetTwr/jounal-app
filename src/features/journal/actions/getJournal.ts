@@ -1,5 +1,6 @@
 "use server";
 
+import { assertAuthenticated } from "@/lib/auth";
 import { journalService } from "../services";
 import type { JournalEntry } from "../types";
 
@@ -8,5 +9,7 @@ import type { JournalEntry } from "../types";
  * Read-only — no revalidation needed.
  */
 export async function getJournal(id: string): Promise<JournalEntry | null> {
+    await assertAuthenticated();
+
     return journalService.getJournal(id);
 }

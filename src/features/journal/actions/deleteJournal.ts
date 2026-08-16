@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { assertAuthenticated } from "@/lib/auth";
 import { journalService } from "../services";
 import { JOURNAL_LIST_PATH, getJournalDetailPath } from "./paths";
 
@@ -10,6 +11,7 @@ import { JOURNAL_LIST_PATH, getJournalDetailPath } from "./paths";
  * previously cached view of the now-deleted entry does not linger.
  */
 export async function deleteJournal(id: string): Promise<void> {
+    await assertAuthenticated();
     await journalService.deleteJournal(id);
 
     revalidatePath(JOURNAL_LIST_PATH);
