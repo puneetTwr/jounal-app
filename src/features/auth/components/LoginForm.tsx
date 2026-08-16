@@ -9,6 +9,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { authenticate } from "@/features/auth/actions";
+import { isSafeRedirectPath } from "../isSafeRedirectPath";
 
 interface LoginFormProps {
   nextPath?: string;
@@ -46,7 +47,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
         return;
       }
 
-      router.replace(nextPath && nextPath.startsWith("/") ? nextPath : "/");
+      router.replace(isSafeRedirectPath(nextPath) ? nextPath : "/");
       router.refresh();
     });
   }

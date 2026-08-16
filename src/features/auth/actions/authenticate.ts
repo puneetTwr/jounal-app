@@ -7,6 +7,7 @@ import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from
 import { getClientIp } from "@/lib/auth/getClientIp";
 import { isLoginLockedOut, recordLoginFailure, recordLoginSuccess } from "@/lib/auth/loginRateLimiter";
 import { isValidTotpCode } from "@/lib/auth/totp";
+import { logAuthEvent } from "@/lib/auth/logAuthEvent";
 
 export interface AuthenticateResult {
     success: boolean;
@@ -30,6 +31,7 @@ export async function authenticate(password: string, totpCode: string): Promise<
     const clientIp = await getClientIp();
 
     if (isLoginLockedOut(clientIp)) {
+        logAuthEvent("lockout", clientIp);
         return { success: false, error: "Too many attempts. Please try again later." };
     }
 
@@ -39,10 +41,12 @@ export async function authenticate(password: string, totpCode: string): Promise<
 
     if (!passwordMatches || !totpMatches) {
         recordLoginFailure(clientIp);
+        logAuthEvent("failure", clientIp);
         return { success: false, error: "That password or code doesn't match." };
     }
 
     recordLoginSuccess(clientIp);
+    logAuthEvent("success", clientIp);
 
     const token = await createSessionToken(expectedPassword, getSessionSecret());
     const cookieStore = await cookies();
