@@ -102,6 +102,14 @@ export function LoginForm({ nextPath }: LoginFormProps) {
           style={monoStyle}
           className={`mt-3 w-48 border-b border-[#f4e6d2]/30 bg-transparent px-1 py-1.5 text-center text-lg tracking-[0.3em] text-[#f4e6d2] placeholder:text-[#f4e6d2]/35 focus:border-[#f4e6d2]/70 ${isPending ? "opacity-40" : ""}`}
         />
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className="mt-4 block w-full text-center text-xs uppercase tracking-[0.2em] text-[#f4e6d2]/70 transition hover:text-[#f4e6d2] disabled:opacity-40"
+        >
+          {isPending ? "Checking…" : "Sign in"}
+        </button>
       </form>
 
       <div aria-live="polite" className="min-h-4">
