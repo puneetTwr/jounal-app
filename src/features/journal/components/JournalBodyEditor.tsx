@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, Pencil } from "lucide-react";
 import Link from "next/link";
 import { type MouseEvent, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { updateJournalContent } from "../actions/updateJournalContent";
 import { JOURNAL_LIST_PATH } from "../actions/paths";
 import { AUTOSAVE_DEBOUNCE_MS } from "./autosaveConfig";
 import { InsertTemplateControl } from "./InsertTemplateControl";
+import { JournalContentView } from "./JournalContentView";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { SaveIndicator, type SaveStatus } from "./SaveIndicator";
 import { UnsavedChangesGuard } from "./UnsavedChangesGuard";
@@ -66,6 +67,13 @@ export function JournalBodyEditor({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [, startTransition] = useTransition();
     const saveSeqRef = useRef(0);
+
+    // Opening an existing entry lands on the rendered, read-only view;
+    // the Markdown editor only mounts once the user clicks Edit. A blank
+    // entry has nothing to render, so it skips straight to editing.
+    const [mode, setMode] = useState<"view" | "edit">(() =>
+        initialContent.trim().length === 0 ? "edit" : "view"
+    );
 
     const isDirty = content !== savedContent;
     const hasAnyUnsavedChanges = isDirty || isMetadataDirty;
@@ -138,14 +146,40 @@ export function JournalBodyEditor({
                     Back to Journals
                 </Link>
 
-                <SaveIndicator status={sharedStatus} errorMessage={sharedErrorMessage} />
+                <div className="flex items-center gap-4">
+                    <SaveIndicator status={sharedStatus} errorMessage={sharedErrorMessage} />
+
+                    {mode === "view" ? (
+                        <button
+                            type="button"
+                            onClick={() => setMode("edit")}
+                            className="flex items-center gap-1.5 text-body font-medium text-muted-foreground hover:text-accent"
+                        >
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
+                            Edit
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setMode("view")}
+                            className="flex items-center gap-1.5 text-body font-medium text-muted-foreground hover:text-accent"
+                        >
+                            <Eye className="h-4 w-4" aria-hidden="true" />
+                            Done
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {content.trim().length === 0 && (
+            {mode === "edit" && content.trim().length === 0 && (
                 <InsertTemplateControl frontMatter={frontMatter} onInsert={handleContentChange} />
             )}
 
-            <MarkdownEditor value={content} onChange={handleContentChange} />
+            {mode === "view" ? (
+                <JournalContentView content={content} />
+            ) : (
+                <MarkdownEditor value={content} onChange={handleContentChange} />
+            )}
         </div>
     );
 }

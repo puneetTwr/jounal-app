@@ -6,6 +6,7 @@ export { JournalDetail } from "./JournalDetail";
 export { JournalStatusBadges } from "./JournalStatusBadges";
 export { formatJournalDate, formatJournalDateTime } from "./formatJournalDate";
 export { JournalBodyEditor } from "./JournalBodyEditor";
+export { JournalContentView } from "./JournalContentView";
 export { MarkdownEditor } from "./MarkdownEditor";
 export { SaveIndicator, type SaveStatus } from "./SaveIndicator";
 export { UnsavedChangesGuard } from "./UnsavedChangesGuard";
