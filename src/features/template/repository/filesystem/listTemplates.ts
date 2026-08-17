@@ -1,9 +1,9 @@
 import { listMarkdownFilePaths, loadMarkdownEntryFile } from "@/lib/markdown";
 import { getTemplatesDirectoryPath } from "@/lib/paths";
-import { TemplateParseError } from "../errors";
-import { toTemplateEntry } from "../mapper";
-import type { TemplateEntry } from "../types";
-import { validateTemplateEntry } from "../validation";
+import { TemplateParseError } from "../../errors";
+import { toTemplateEntry } from "../../mapper";
+import type { TemplateEntry } from "../../types";
+import { validateTemplateEntry } from "../../validation";
 
 /**
  * Lists every template found in the templates directory.

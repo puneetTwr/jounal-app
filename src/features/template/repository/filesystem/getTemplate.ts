@@ -1,9 +1,9 @@
 import { fileExists } from "@/lib/filesystem";
 import { loadMarkdownEntryFile } from "@/lib/markdown";
-import { TemplateParseError } from "../errors";
-import { toTemplateEntry } from "../mapper";
-import type { TemplateEntry } from "../types";
-import { validateTemplateEntry } from "../validation";
+import { TemplateParseError } from "../../errors";
+import { toTemplateEntry } from "../../mapper";
+import type { TemplateEntry } from "../../types";
+import { validateTemplateEntry } from "../../validation";
 import { getTemplateFilePath } from "./entryFilePath";
 
 /**

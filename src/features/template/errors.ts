@@ -17,6 +17,24 @@ export class TemplateNotFoundError extends Error {
     }
 }
 
+/**
+ * Thrown by getTemplateFilePath() when the given id is not a
+ * well-formed UUID. Every path-taking repository function routes
+ * through that helper, so this is what stops a malformed or malicious
+ * id (e.g. containing `../`) from ever being joined into a filesystem
+ * path.
+ */
+export class InvalidTemplateIdError extends Error {
+    public readonly id: string;
+
+    constructor(id: string) {
+        super(`"${id}" is not a valid template id.`);
+        this.name = "InvalidTemplateIdError";
+        this.id = id;
+        Object.freeze(this);
+    }
+}
+
 /** Thrown by createEntry() when a template with the given id already exists. */
 export class TemplateAlreadyExistsError extends Error {
     public readonly id: string;

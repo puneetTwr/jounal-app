@@ -1,5 +1,5 @@
 import { deleteFile, fileExists } from "@/lib/filesystem";
-import { JournalEntryNotFoundError } from "../errors";
+import { JournalEntryNotFoundError } from "../../errors";
 import { getJournalEntryFilePath } from "./entryFilePath";
 
 /**

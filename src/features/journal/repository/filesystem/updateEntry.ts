@@ -1,9 +1,9 @@
 import { fileExists, writeTextFile } from "@/lib/filesystem";
 import { serializeMarkdownDocument } from "@/lib/markdown";
-import { JournalEntryNotFoundError, JournalValidationError } from "../errors";
-import { toMarkdownDocument } from "../mapper";
-import type { JournalEntry } from "../types";
-import { validateJournalEntry } from "../validation";
+import { JournalEntryNotFoundError, JournalValidationError } from "../../errors";
+import { toMarkdownDocument } from "../../mapper";
+import type { JournalEntry } from "../../types";
+import { validateJournalEntry } from "../../validation";
 import { getJournalEntryFilePath } from "./entryFilePath";
 
 /**

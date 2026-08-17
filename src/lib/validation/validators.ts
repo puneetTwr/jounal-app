@@ -13,9 +13,14 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function validateUuid(value: unknown, path: string, issues: ValidationIssue[]): void {
-    if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
+    if (!isValidUuid(value)) {
         issues.push(issue(path, "INVALID_UUID", `Expected a UUID string, received ${JSON.stringify(value)}.`));
     }
+}
+
+/** Whether `value` is a syntactically valid UUID string. */
+export function isValidUuid(value: unknown): value is string {
+    return typeof value === "string" && UUID_PATTERN.test(value);
 }
 
 export function validateNonEmptyString(

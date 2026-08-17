@@ -1,10 +1,10 @@
 import { ensureDirectoryExists, fileExists, writeTextFile } from "@/lib/filesystem";
 import { serializeMarkdownDocument } from "@/lib/markdown";
 import { getJournalsDirectoryPath } from "@/lib/paths";
-import { JournalEntryAlreadyExistsError, JournalValidationError } from "../errors";
-import { toMarkdownDocument } from "../mapper";
-import type { JournalEntry } from "../types";
-import { validateJournalEntry } from "../validation";
+import { JournalEntryAlreadyExistsError, JournalValidationError } from "../../errors";
+import { toMarkdownDocument } from "../../mapper";
+import type { JournalEntry } from "../../types";
+import { validateJournalEntry } from "../../validation";
 import { getJournalEntryFilePath } from "./entryFilePath";
 
 /**

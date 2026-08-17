@@ -1,5 +1,6 @@
 "use server";
 
+import { assertAuthenticated } from "@/lib/auth";
 import type { JournalEntry } from "../types";
 import { getJournal } from "./getJournal";
 import { updateJournal } from "./updateJournal";
@@ -30,6 +31,8 @@ export async function updateJournalContent(
     id: string,
     content: string
 ): Promise<UpdateJournalContentResult> {
+    await assertAuthenticated();
+
     try {
         const existing = await getJournal(id);
 

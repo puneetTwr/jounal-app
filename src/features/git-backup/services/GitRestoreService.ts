@@ -1,4 +1,4 @@
-import { getGitBackupConfig } from "@/lib/config";
+import { getGitBackupConfig, getStorageBackend } from "@/lib/config";
 import {
     commitAllChanges,
     fetchFromRemote,
@@ -47,6 +47,14 @@ export interface GitRestoreService {
 
 export const gitRestoreService: GitRestoreService = {
     restore: async () => {
+        // Same reasoning as GitBackupService.backup(): on the github-api
+        // storage backend there is no separate local working tree to pull
+        // into, so this fails closed here too, not just via the hidden
+        // button — see ADR-002, VERCEL_IMPLEMENTATION_PLAN.md Phase 5.
+        if (getStorageBackend() !== "filesystem") {
+            return { status: "not-configured" };
+        }
+
         const config = getGitBackupConfig();
         if (!config) {
             return { status: "not-configured" };

@@ -15,6 +15,7 @@ export {
     JournalEntryAlreadyExistsError,
     JournalValidationError,
     JournalEntryParseError,
+    InvalidJournalEntryIdError,
 } from "./errors";
 export type { JournalRepository } from "./repository";
 export { journalRepository } from "./repository";

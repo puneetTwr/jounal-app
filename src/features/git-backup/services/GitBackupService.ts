@@ -1,4 +1,4 @@
-import { getGitBackupConfig } from "@/lib/config";
+import { getGitBackupConfig, getStorageBackend } from "@/lib/config";
 import {
     commitAllChanges,
     GitOperationInProgressError,
@@ -37,7 +37,13 @@ function buildBackupCommitMessage(): string {
  * established for journals and templates.
  */
 export interface GitBackupService {
-    /** Whether both required env vars are set — lets the UI show a clear "not configured" state without attempting a backup. */
+    /**
+     * Whether Backup to Git is both applicable and configured: the
+     * active storage backend has a separate local working tree for it
+     * to operate on (i.e. "filesystem", not "github-api" — see
+     * ADR-002), and both required env vars are set. Lets the UI show a
+     * clear "not configured" state without attempting a backup.
+     */
     isConfigured(): boolean;
 
     /** Runs one full backup cycle. Never throws — failures are reported via the returned status. */
@@ -45,9 +51,19 @@ export interface GitBackupService {
 }
 
 export const gitBackupService: GitBackupService = {
-    isConfigured: () => getGitBackupConfig() !== null,
+    isConfigured: () => getStorageBackend() === "filesystem" && getGitBackupConfig() !== null,
 
     backup: async () => {
+        // On the github-api storage backend, every write already lands as
+        // a commit — there is no separate local working tree left for
+        // this feature to stage/push. Fails closed here too, not just by
+        // hiding the button, so a direct call to this Server Action can't
+        // bypass the UI gate (see ADR-002, VERCEL_IMPLEMENTATION_PLAN.md
+        // Phase 5).
+        if (getStorageBackend() !== "filesystem") {
+            return { status: "not-configured" };
+        }
+
         const config = getGitBackupConfig();
         if (!config) {
             return { status: "not-configured" };

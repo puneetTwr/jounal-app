@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { assertAuthenticated } from "@/lib/auth";
 import { journalService } from "../services";
 import type { JournalEntry } from "../types";
 import { JOURNAL_LIST_PATH, getJournalDetailPath } from "./paths";
@@ -11,6 +12,7 @@ import { JOURNAL_LIST_PATH, getJournalDetailPath } from "./paths";
  * changed) and this entry's own detail route.
  */
 export async function updateJournal(entry: JournalEntry): Promise<void> {
+    await assertAuthenticated();
     await journalService.updateJournal(entry);
 
     revalidatePath(JOURNAL_LIST_PATH);
