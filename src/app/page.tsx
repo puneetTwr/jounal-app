@@ -1,4 +1,4 @@
-import { isGitBackupConfigured } from "@/features/git-backup/actions";
+import { isGitBackupConfigured, isGitBackupFeatureAvailable } from "@/features/git-backup/actions";
 import { BackupToGitButton, RestoreFromGitButton } from "@/features/git-backup/components";
 import { listJournals, type JournalSearchFilters } from "@/features/journal/actions";
 import { CreateJournalButton, JournalList, SearchAndFilterBar } from "@/features/journal/components";
@@ -24,6 +24,7 @@ export default async function Home({ searchParams }: HomeProps) {
   const resolvedSearchParams = await searchParams;
   const filters = parseFilters(resolvedSearchParams);
   const entries = await listJournals(filters);
+  const isGitFeatureAvailable = await isGitBackupFeatureAvailable();
   const isGitConfigured = await isGitBackupConfigured();
 
   const hasActiveFilters = Boolean(
@@ -35,10 +36,12 @@ export default async function Home({ searchParams }: HomeProps) {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-page-title font-bold">Journal</h1>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 border-r border-border pr-4">
-            <RestoreFromGitButton isConfigured={isGitConfigured} />
-            <BackupToGitButton isConfigured={isGitConfigured} />
-          </div>
+          {isGitFeatureAvailable && (
+            <div className="flex items-center gap-1 border-r border-border pr-4">
+              <RestoreFromGitButton isConfigured={isGitConfigured} />
+              <BackupToGitButton isConfigured={isGitConfigured} />
+            </div>
+          )}
           <CreateJournalButton />
         </div>
       </div>

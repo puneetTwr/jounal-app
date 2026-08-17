@@ -63,3 +63,17 @@ The one real gap identified when re-scoping this phase: `filesystemJournalReposi
 **Verification (full batch):** `pnpm test` — 8 files, 52/52 passing (up from 36). `npx tsc --noEmit` — clean. `npx eslint .` — clean. `npx next build` — succeeds (same pre-existing, unrelated warnings as last time).
 
 **Next up (not started):** Phase 5 — hide "Backup to Git"/"Restore from Git" when `JOURNAL_STORAGE_BACKEND=github-api` (UI gate in `src/app/page.tsx` + a server-side guard in the two Git-backup Server Actions, not just hiding the button — a direct Server Action call must fail closed too).
+
+---
+
+## 2026-08-17 — Phase 5 (hide Backup/Restore-to-Git on the github-api backend)
+
+On the GitHub API storage backend every write already lands as a commit, so there's no separate local working tree left for these two buttons to operate on. Gated at two independent points, not just one:
+
+- **Service layer (fails closed):** `gitBackupService.isConfigured()` now also requires `getStorageBackend() === "filesystem"` (previously only checked the two Git env vars — which are *also* required for `github-api` mode, so it used to wrongly report "configured" there). `gitBackupService.backup()` and `gitRestoreService.restore()` both return `{ status: "not-configured" }` immediately when the backend isn't `"filesystem"`, before touching `withGitLock`/the `git` CLI at all — so a direct call to either Server Action (bypassing the UI entirely) can't run a Git operation that doesn't apply in this mode.
+- **UI layer (hides, doesn't disable):** new `isGitBackupFeatureAvailable()` Server Action (`src/features/git-backup/actions/isGitBackupFeatureAvailable.ts`), distinct from `isGitBackupConfigured()` — "not configured" means the feature applies but isn't set up yet (worth a disabled button + explanation); this means the feature doesn't apply at all. `src/app/page.tsx` now wraps the whole Restore/Backup button group in `{isGitFeatureAvailable && (...)}` instead of rendering it permanently disabled.
+- Tests: `src/features/git-backup/services/__tests__/backendGating.test.ts` (5 tests) — `isConfigured()` across all three real states (filesystem+unconfigured, filesystem+configured, github-api-with-the-same-vars-set), plus both services' early-return path.
+
+**Verification (full batch):** `pnpm test` — 9 files, 57/57 passing (up from 52). `npx tsc --noEmit` — clean. `npx eslint .` — clean. `npx next build` — one run hit a transient Turbopack worker timeout (`TurbopackInternalError: failed to receive message`, an environment hiccup unrelated to this change — tsc/eslint were already clean at that point); a second run succeeded cleanly with the same pre-existing warnings as every prior phase.
+
+**Next up (not started):** Phase 6 (caching — explicitly deferred until real usage shows it's needed, per the plan) has nothing to build yet. Phase 7 — Vercel-specific platform config: consolidate the two inline `NODE_ENV` checks behind one `isProductionRuntime()` helper, add `TRUSTED_PROXY=vercel` support to `getClientIp()`, add `PRODUCTION_ORIGIN` for Server Actions' allowed origin, fix the `rehype-raw` XSS gap (checklist item 12), add a top-level `error.tsx`.
