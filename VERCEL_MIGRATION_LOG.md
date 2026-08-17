@@ -95,3 +95,18 @@ User confirmed caching (Phase 6) isn't needed yet — skipped straight to Phase 
 **Verification (full batch):** `pnpm test` — 14 files, 86/86 passing (up from 57). `npx tsc --noEmit` — clean (after switching the `NODE_ENV` test to `vi.stubEnv`, since direct assignment doesn't type-check). `npx eslint .` — clean. `npx next build` — succeeds, same pre-existing unrelated warnings as every prior phase.
 
 **Next up (not started):** Phase 8 — actual deployment: provision the Vercel project, set env vars (`JOURNAL_STORAGE_BACKEND=github-api`, `TRUSTED_PROXY=vercel`, the existing auth/session/TOTP/Git vars — no `JOURNAL_CONTENT_ROOT`), deploy, and run through the plan's end-to-end validation (create/edit/delete a test entry, confirm matching commits land in the content repo, confirm Backup/Restore buttons are absent, confirm `Secure`/HSTS and rate-limiter IP behavior against the real deployment). This phase is inherently manual/external — not something to execute from this environment.
+
+---
+
+## 2026-08-17 — Phase 8 runbook written (`VERCEL_DEPLOYMENT_GUIDE.md`)
+
+Phase 8 itself is still manual/external (provisioning an actual Vercel project and clicking through its dashboard isn't something this environment can do), but the step-by-step instructions for it are now written down, researched directly against Vercel's current docs rather than assumed:
+
+- Fetched Vercel's live documentation (not relied on prior knowledge, since hosting-platform specifics shift): environment variables (dashboard + CLI, Production/Preview/Development scoping, "changes only apply to the next deployment"), request headers (confirmed `X-Forwarded-For` is edge-set/overwritten by Vercel itself, which is what makes `TRUSTED_PROXY=vercel` — added in Phase 7 — safe to trust), Vercel Functions limits, custom domains/SSL.
+- **Correction surfaced by this research:** `VERCEL_DEPLOYMENT_REVIEW.md` cited "Hobby ~10s" function timeout — current docs show the default is now 300s (5 minutes) on every plan, Fluid Compute default for new projects. Noted explicitly in the new guide as an outdated-assumption correction, not silently fixed in place.
+- `VERCEL_DEPLOYMENT_GUIDE.md` (new): prerequisites checklist, PAT creation, project import, the exact env var table for this app's `github-api` backend (explicitly: don't set `JOURNAL_CONTENT_ROOT`, leave `PRODUCTION_ORIGIN` unset unless another proxy/CDN sits in front of Vercel), a flagged risk around Preview deployments sharing the same real content repo as Production if the same secrets are scoped to both, deploy + smoke-test + end-to-end write-test steps, custom domain setup, ongoing-operations notes (redeploy-on-push, env var changes need a redeploy, PAT rotation order, monitoring via Vercel's Logs tab), and a troubleshooting table tied to this app's actual error types (`getStorageBackend()`'s fail-fast messages, `GitHubConflictError`, etc.).
+- Added a short "historical" note to the top of `VERCEL_DEPLOYMENT_REVIEW.md` — its "not suitable for Vercel" verdict predates ADR-002 and no longer reflects the current architecture; left in place as the investigation record, not deleted.
+
+**Verification:** documentation-only change — no application code touched, so no `tsc`/`eslint`/`next build`/`vitest` re-run needed for this entry.
+
+**Next up:** actually running Phase 8's steps (a real Vercel project + real deployment) whenever the user is ready — external to this environment.

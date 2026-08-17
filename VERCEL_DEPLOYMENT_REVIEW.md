@@ -1,5 +1,13 @@
 # Vercel Deployment Review
 
+> **Historical.** This review's "not suitable for Vercel" verdict was
+> accurate when written, for the architecture that existed at the time.
+> `docs/architecture/ADR-002-github-api-storage-for-vercel.md` documents
+> the storage-layer change (a GitHub-API-backed adapter) that resolves
+> the blocker described below; `VERCEL_DEPLOYMENT_GUIDE.md` has the
+> actual step-by-step deployment instructions. Kept here as the record
+> of the investigation that led to that decision.
+
 Investigation only — no application code was changed. This file is the only artifact produced.
 
 ## Summary
