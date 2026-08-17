@@ -2,6 +2,7 @@
 
 import "@uiw/react-md-editor/markdown-editor.css";
 import dynamic from "next/dynamic";
+import { safeMarkdownUrlTransform } from "./safeMarkdownUrlTransform";
 
 const MarkdownPreview = dynamic(
     () => import("@uiw/react-md-editor").then((mod) => mod.default.Markdown),
@@ -35,6 +36,8 @@ export function JournalContentView({ content }: JournalContentViewProps) {
             <MarkdownPreview
                 source={content}
                 className="rounded-lg border border-border bg-surface p-6"
+                skipHtml
+                urlTransform={safeMarkdownUrlTransform}
             />
         </div>
     );

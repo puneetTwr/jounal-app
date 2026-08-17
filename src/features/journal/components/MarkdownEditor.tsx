@@ -3,6 +3,7 @@
 import "@uiw/react-md-editor/markdown-editor.css";
 import dynamic from "next/dynamic";
 import { journalEditorCommands } from "./editorCommands";
+import { safeMarkdownUrlTransform } from "./safeMarkdownUrlTransform";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
 
@@ -18,7 +19,11 @@ interface MarkdownEditorProps {
  *
  * `preview="edit"` keeps this a raw Markdown source editor with a
  * formatting toolbar, not a live-preview/WYSIWYG surface — a separate
- * rendered view isn't needed alongside it.
+ * rendered view isn't needed alongside it. `previewOptions` (skipHtml +
+ * a safe urlTransform) has no visible effect while that stays true, but
+ * is set anyway so a future switch to "live"/"preview" mode doesn't
+ * silently reintroduce the raw-HTML rendering gap closed in
+ * JournalContentView — see SECURITY_HARDENING_CHECKLIST.md item 12.
  *
  * Dynamically imported with `ssr: false` because @uiw/react-md-editor
  * reads `window`/`document` at import time and cannot run during
@@ -41,6 +46,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                 height={480}
                 commands={journalEditorCommands}
                 textareaProps={{ "aria-label": "Journal content (Markdown)" }}
+                previewOptions={{ skipHtml: true, urlTransform: safeMarkdownUrlTransform }}
             />
         </div>
     );

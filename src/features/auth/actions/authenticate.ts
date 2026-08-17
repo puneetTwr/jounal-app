@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 
-import { getAuthPassword, getSessionSecret, getTotpSecret } from "@/lib/config";
+import { getAuthPassword, getSessionSecret, getTotpSecret, isProductionRuntime } from "@/lib/config";
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
 import { getClientIp } from "@/lib/auth/getClientIp";
 import { isLoginLockedOut, recordLoginFailure, recordLoginSuccess } from "@/lib/auth/loginRateLimiter";
@@ -54,7 +54,7 @@ export async function authenticate(password: string, totpCode: string): Promise<
     cookieStore.set(SESSION_COOKIE_NAME, token, {
         httpOnly: true,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: isProductionRuntime(),
         path: "/",
         maxAge: SESSION_MAX_AGE_SECONDS,
     });

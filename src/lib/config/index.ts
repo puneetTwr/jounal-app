@@ -10,3 +10,6 @@ export {
 } from "./gitBackupConfig";
 export { getStorageBackend, JOURNAL_STORAGE_BACKEND_ENV_VAR, type StorageBackend } from "./storageBackendConfig";
 export { getGithubApiStorageConfig, GITHUB_API_DEFAULT_BRANCH, type GithubApiStorageConfig } from "./githubApiConfig";
+export { isProductionRuntime } from "./runtimeConfig";
+export { getTrustedProxy, TRUSTED_PROXY_ENV_VAR, type TrustedProxy } from "./trustedProxyConfig";
+export { getAllowedServerActionOrigins, PRODUCTION_ORIGIN_ENV_VAR } from "./productionOriginConfig";
