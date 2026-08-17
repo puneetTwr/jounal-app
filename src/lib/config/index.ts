@@ -8,3 +8,5 @@ export {
     JOURNAL_CONTENT_GIT_TOKEN_ENV_VAR,
     type GitBackupConfig,
 } from "./gitBackupConfig";
+export { getStorageBackend, JOURNAL_STORAGE_BACKEND_ENV_VAR, type StorageBackend } from "./storageBackendConfig";
+export { getGithubApiStorageConfig, GITHUB_API_DEFAULT_BRANCH, type GithubApiStorageConfig } from "./githubApiConfig";
