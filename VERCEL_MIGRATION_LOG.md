@@ -110,3 +110,17 @@ Phase 8 itself is still manual/external (provisioning an actual Vercel project a
 **Verification:** documentation-only change — no application code touched, so no `tsc`/`eslint`/`next build`/`vitest` re-run needed for this entry.
 
 **Next up:** actually running Phase 8's steps (a real Vercel project + real deployment) whenever the user is ready — external to this environment.
+
+---
+
+## 2026-08-17 — Branch pushed to GitHub; guide updated for the branch mismatch
+
+Checking before declaring this "ready to deploy" surfaced a real gap: `architecture-change-for-hosting` (all 11 commits — the entire security hardening pass plus the Vercel/GitHub-API migration) existed only on this local machine, never pushed to `origin`. `main` on GitHub was still 11 commits behind, with none of that work. Vercel imports from GitHub and defaults to treating the repo's default branch (`main`) as its Production Branch — deploying with no changes here would have silently gone live with the old, unhardened, pre-migration code.
+
+- Asked the user how to resolve this (merge to `main` first vs. push this branch and point Vercel at it directly vs. handle it themselves) rather than picking silently, since it's a push to shared remote state.
+- User chose: push the branch as-is, point Vercel at it. Ran `git push -u origin architecture-change-for-hosting` — new branch now exists on GitHub, tracking `origin/architecture-change-for-hosting`.
+- Updated `VERCEL_DEPLOYMENT_GUIDE.md`'s Step 2 (project import) with an explicit warning about this and instructions to set **Project Settings → Git → Production Branch** to `architecture-change-for-hosting` (not the default `main`) before the first real deployment, plus a note that merging into `main` later is the more conventional long-term setup. Updated the "Deploying updates" section in Ongoing Operations to match.
+
+**Verification:** documentation-only change plus a git push; no application code touched.
+
+**Still outstanding before Phase 8:** merging this branch into `main` eventually (not done — left as the user's call, noted in the guide), and the `GO_LIVE_MANUAL_STEPS.md` items (rotate secrets, 2FA, make source repo private) which remain untouched by this session's work.

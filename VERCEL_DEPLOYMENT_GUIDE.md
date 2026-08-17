@@ -87,6 +87,18 @@ scoped specifically for this deployment (recommended — see
 
 ## 2. Import the project into Vercel
 
+> **⚠️ Branch note:** all the work this guide depends on (the
+> security hardening, and the entire GitHub-API storage migration) lives
+> on the `architecture-change-for-hosting` branch, not `main` — `main`
+> on GitHub is still 11 commits behind. Vercel defaults to treating your
+> repo's default branch (`main`) as the **Production Branch**, so you
+> must explicitly point it at `architecture-change-for-hosting` in
+> Step 3 below, or every deployment will silently build the old,
+> unhardened `main` instead of the code you've actually been testing.
+> This is a deliberate, temporary choice — the more conventional
+> long-term setup is merging this branch into `main` once you're
+> confident in it, and letting `main` be the Production Branch again.
+
 1. Go to [vercel.com/new](https://vercel.com/new) and click **New
    Project**, or **Add New… → Project** from your dashboard.
 2. Select this app's GitHub repository from the list (authorize
@@ -95,7 +107,13 @@ scoped specifically for this deployment (recommended — see
 3. Vercel auto-detects **Next.js** as the framework — leave Build
    Command (`next build`), Output Directory, and Install Command at
    their defaults. Root Directory should be `/` (this app lives at the
-   repo root).
+   repo root). Under **Git**, either pick
+   `architecture-change-for-hosting` as the branch to import from
+   directly (if Vercel's import screen offers a branch selector — it
+   varies by account type), or complete the import against whatever
+   branch is offered and immediately fix it in **Project Settings → Git
+   → Production Branch**, setting it to `architecture-change-for-hosting`,
+   *before* triggering the first real deployment.
 4. **Don't click Deploy yet** — go to the environment variables section
    on this same import screen (or **Environment Variables** in Project
    Settings if you've already created the project) and set the
@@ -257,10 +275,11 @@ already tracked elsewhere — do them if you haven't:
 
 ## Ongoing operations
 
-**Deploying updates.** Once the GitHub repo is connected, pushing to the
-Production Branch (usually `main`) automatically triggers a new
-Production deployment — no manual redeploy step for routine code
-changes.
+**Deploying updates.** Once the GitHub repo is connected, pushing to
+whichever branch is set as the Production Branch (`architecture-change-for-hosting`
+for now, per the note in Step 2 — usually `main` once you merge this
+branch in) automatically triggers a new Production deployment — no
+manual redeploy step for routine code changes.
 
 **Changing an environment variable.** Edit it in **Project Settings →
 Environment Variables**, then trigger a new deployment for it to take
