@@ -1,9 +1,9 @@
 import { fileExists } from "@/lib/filesystem";
 import { loadMarkdownEntryFile } from "@/lib/markdown";
-import { JournalEntryParseError } from "../errors";
-import { toJournalEntry } from "../mapper";
-import type { JournalEntry } from "../types";
-import { validateJournalEntry } from "../validation";
+import { JournalEntryParseError } from "../../errors";
+import { toJournalEntry } from "../../mapper";
+import type { JournalEntry } from "../../types";
+import { validateJournalEntry } from "../../validation";
 import { getJournalEntryFilePath } from "./entryFilePath";
 
 /**

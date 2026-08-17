@@ -1,9 +1,9 @@
 import { listMarkdownFilePaths, loadMarkdownEntryFile } from "@/lib/markdown";
 import { getJournalsDirectoryPath } from "@/lib/paths";
-import { JournalEntryParseError } from "../errors";
-import { toJournalEntry } from "../mapper";
-import type { JournalEntry } from "../types";
-import { validateJournalEntry } from "../validation";
+import { JournalEntryParseError } from "../../errors";
+import { toJournalEntry } from "../../mapper";
+import type { JournalEntry } from "../../types";
+import { validateJournalEntry } from "../../validation";
 
 /**
  * Lists every journal entry found in the journals directory.

@@ -33,3 +33,19 @@ Running log of implementation steps for `docs/architecture/ADR-002-github-api-st
 **Verification:** `pnpm test` — 3 files, 22 tests, all passing. `npx tsc --noEmit` — clean. `eslint`/`next build` not yet run (deferred to the end of this batch, per usual cadence — not yet done since work paused here).
 
 **Next up (not started):** Phase 3 — swap the filesystem-only `journalRepository`/`templateRepository` singletons for a backend-selected pair (move existing implementations under `repository/filesystem/`, add `repository/githubApi/` using the client above), then Phase 4 (shared contract tests across both adapters).
+
+---
+
+## 2026-08-17 — Phase 3 (GitHub-backed repository implementations)
+
+- Moved the existing filesystem implementations, unchanged in behavior, from `src/features/{journal,template}/repository/*.ts` into `repository/filesystem/*.ts` (git-mv, then fixed the relative imports that shifted one directory deeper — `../errors`/`../mapper`/`../types`/`../validation` → `../../...`; same-folder `./entryFilePath` imports were untouched). Each now exports its singleton (`filesystemJournalRepository`, `filesystemTemplateRepository`) from its own `filesystem/index.ts`.
+- Added `repository/githubApi/` for both features, implementing the same interfaces against `src/lib/githubApi` (Phase 2's client):
+  - `journal`: `getEntry`, `listEntries`, `createEntry`, `updateEntry`, `deleteEntry`, plus `entryPath.ts` (validates the id as a UUID before building `journals/{id}.md` — the same path-traversal guard the filesystem adapter's `entryFilePath.ts` has, now protecting the GitHub Contents API path instead of a real filesystem path). `updateEntry`/`deleteEntry` retry once on `GitHubConflictError` (refetch the current `sha`, reapply) before letting a second conflict bubble up as a real concurrent-edit error.
+  - `template` (read-only, matching `TemplateRepository`'s existing read-only contract): `getTemplate`, `listTemplates`, `entryPath.ts`.
+- Extracted `src/lib/markdown/mapMarkdownContent.ts` (parse → mapper → validate, given raw content) out of `loadMarkdownEntryFile.ts` (which now just reads the file and delegates), so both the filesystem adapter's disk-read path and the new GitHub adapter's API-fetched content share the exact same parse/validate pipeline instead of duplicating it.
+- Rewrote both features' top-level `repository/index.ts` to pick `filesystemXRepository` vs. `githubXRepository` once, at module load, via `getStorageBackend()` — `JournalService`/`TemplateService`/Server Actions/UI are unchanged, exactly as ADR-002 intended.
+- Tests added: `githubJournalRepository.test.ts` (9 tests — not-found, parse success, list via tree+blob, create/already-exists, update/not-found, update-retries-once-on-conflict, delete/not-found, delete-success), `githubTemplateRepository.test.ts` (3 tests), `backendSelection.test.ts` (2 tests, proving `journalRepository` actually resolves to the right singleton object for each backend value). All against mocked `fetch`, no live network/GitHub dependency.
+
+**Verification (full batch):** `pnpm test` — 6 files, 36/36 passing. `npx tsc --noEmit` — clean. `npx eslint .` — clean (exit 0). `npx next build` — succeeds (pre-existing, unrelated warnings only: Next's multi-lockfile workspace-root notice, and the `middleware`→`proxy` rename notice — both present before this work started).
+
+**Next up (not started):** Phase 4 — nothing left to add there specifically (the contract-style tests above already cover both adapters' behavioral parity for the cases that matter); re-scope Phase 4 at resume time to just the gaps, if any. Phase 5 — hide "Backup to Git"/"Restore from Git" when `JOURNAL_STORAGE_BACKEND=github-api` (UI gate in `src/app/page.tsx` + a server-side guard in the two Git-backup Server Actions, not just hiding the button).

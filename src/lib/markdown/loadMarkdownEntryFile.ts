@@ -1,12 +1,13 @@
 import { readTextFile } from "@/lib/filesystem";
 import type { ValidationIssue, ValidationResult } from "@/lib/validation";
-import { parseMarkdownDocument } from "./parseMarkdownDocument";
+import { mapMarkdownContent } from "./mapMarkdownContent";
 import type { MarkdownDocument } from "./types";
 
 /**
  * Loads a single Markdown-backed domain entity from disk and validates
  * it: Filesystem -> Markdown parser -> caller-supplied structural
- * mapper -> caller-supplied validator.
+ * mapper -> caller-supplied validator (the read-from-disk step wrapping
+ * mapMarkdownContent(), which every storage backend shares).
  *
  * Shared by every domain (journal, template, ...) that stores one
  * record per Markdown file, so the read path — and what happens when a
@@ -21,13 +22,5 @@ export async function loadMarkdownEntryFile<T>(
     onInvalid: (filePath: string, issues: ValidationIssue[]) => Error
 ): Promise<T> {
     const rawContents = await readTextFile(filePath);
-    const document = parseMarkdownDocument(rawContents);
-    const mapped = toEntry(document);
-    const result = validate(mapped);
-
-    if (!result.valid) {
-        throw onInvalid(filePath, result.issues);
-    }
-
-    return result.value;
+    return mapMarkdownContent(rawContents, filePath, toEntry, validate, onInvalid);
 }

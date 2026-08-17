@@ -1,7 +1,7 @@
 import { join, relative, resolve } from "node:path";
 import { isValidUuid } from "@/lib/validation";
 import { getTemplatesDirectoryPath } from "@/lib/paths";
-import { InvalidTemplateIdError } from "../errors";
+import { InvalidTemplateIdError } from "../../errors";
 
 const TEMPLATE_FILE_EXTENSION = ".md";
 

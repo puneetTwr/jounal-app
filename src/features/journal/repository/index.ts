@@ -1,21 +1,18 @@
-import { createEntry } from "./createEntry";
-import { deleteEntry } from "./deleteEntry";
-import { getEntry } from "./getEntry";
+import { getStorageBackend } from "@/lib/config";
+import { filesystemJournalRepository } from "./filesystem";
+import { githubJournalRepository } from "./githubApi";
 import type { JournalRepository } from "./JournalRepository";
-import { listEntries } from "./listEntries";
-import { updateEntry } from "./updateEntry";
 
 export type { JournalRepository } from "./JournalRepository";
 
 /**
- * Filesystem-backed implementation of JournalRepository, composing the
- * filesystem, markdown, mapper, and validation layers. This is the only
- * module in the journal domain permitted to know about those layers.
+ * The active JournalRepository implementation, selected once at module
+ * load by JOURNAL_STORAGE_BACKEND (see ADR-002): the original
+ * filesystem-backed implementation, or the GitHub-API-backed one used
+ * for hosts with no persistent disk. Everything above this layer
+ * (JournalService, Server Actions, UI) depends only on the
+ * JournalRepository interface and never knows — or needs to know —
+ * which one is active.
  */
-export const journalRepository: JournalRepository = {
-    listEntries,
-    getEntry,
-    createEntry,
-    updateEntry,
-    deleteEntry,
-};
+export const journalRepository: JournalRepository =
+    getStorageBackend() === "github-api" ? githubJournalRepository : filesystemJournalRepository;

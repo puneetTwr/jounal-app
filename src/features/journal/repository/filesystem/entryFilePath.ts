@@ -1,7 +1,7 @@
 import { join, relative, resolve } from "node:path";
 import { isValidUuid } from "@/lib/validation";
 import { getJournalsDirectoryPath } from "@/lib/paths";
-import { InvalidJournalEntryIdError } from "../errors";
+import { InvalidJournalEntryIdError } from "../../errors";
 
 const JOURNAL_ENTRY_FILE_EXTENSION = ".md";
 
