@@ -49,3 +49,17 @@ Running log of implementation steps for `docs/architecture/ADR-002-github-api-st
 **Verification (full batch):** `pnpm test` — 6 files, 36/36 passing. `npx tsc --noEmit` — clean. `npx eslint .` — clean (exit 0). `npx next build` — succeeds (pre-existing, unrelated warnings only: Next's multi-lockfile workspace-root notice, and the `middleware`→`proxy` rename notice — both present before this work started).
 
 **Next up (not started):** Phase 4 — nothing left to add there specifically (the contract-style tests above already cover both adapters' behavioral parity for the cases that matter); re-scope Phase 4 at resume time to just the gaps, if any. Phase 5 — hide "Backup to Git"/"Restore from Git" when `JOURNAL_STORAGE_BACKEND=github-api` (UI gate in `src/app/page.tsx` + a server-side guard in the two Git-backup Server Actions, not just hiding the button).
+
+---
+
+## 2026-08-17 — Phase 4 (shared contract tests across both adapters)
+
+The one real gap identified when re-scoping this phase: `filesystemJournalRepository`/`filesystemTemplateRepository` had **zero** test coverage before today (no test framework existed anywhere in the repo before this migration work started) — only Phase 3's tests exercised the new GitHub adapter. Closed that gap with a genuine shared contract suite instead of one-off filesystem tests, so both implementations are proven behaviorally identical, not just independently "probably fine."
+
+- `src/testSupport/inMemoryGithubRepo.ts` — a small, stateful fake of GitHub's Git Data/Contents API (tracks files by content-repo-relative path in a `Map`, generates a new sha on every write, rejects a stale sha with 409/422 exactly like the real API). Implements only the endpoints `src/lib/githubApi` actually calls — not a general-purpose GitHub mock.
+- `src/features/journal/repository/__tests__/contract.test.ts` — `describe.each` over `[filesystemJournalRepository, githubJournalRepository]` (filesystem backed by a real temp directory via `mkdtemp`, GitHub backed by the fake above), 6 shared cases × 2 adapters = 12 tests: not-found → null, full create→read→update→delete lifecycle reflected in both `getEntry` and `listEntries` at each step, duplicate-id → `JournalEntryAlreadyExistsError`, update/delete-nonexistent → `JournalEntryNotFoundError`, invalid entry → `JournalValidationError` with nothing written.
+- `src/features/template/repository/__tests__/contract.test.ts` — same pattern for the read-only `TemplateRepository` (no create/update/delete exists to test parity on, per its interface): not-found → null, a template placed directly in each backend's storage is visible via both `getTemplate` and `listTemplates`. 2 shared cases × 2 adapters = 4 tests.
+
+**Verification (full batch):** `pnpm test` — 8 files, 52/52 passing (up from 36). `npx tsc --noEmit` — clean. `npx eslint .` — clean. `npx next build` — succeeds (same pre-existing, unrelated warnings as last time).
+
+**Next up (not started):** Phase 5 — hide "Backup to Git"/"Restore from Git" when `JOURNAL_STORAGE_BACKEND=github-api` (UI gate in `src/app/page.tsx` + a server-side guard in the two Git-backup Server Actions, not just hiding the button — a direct Server Action call must fail closed too).
