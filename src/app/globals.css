@@ -30,6 +30,22 @@
   --danger: #dc2626;
   --pinned: #d97706;
   --favorite: #db2777;
+
+  /*
+   * The login screen's full-bleed background image, swapped per
+   * viewport with a plain CSS media query rather than JS device
+   * detection — no hydration mismatch, identical behavior in dev and
+   * hosted. Mobile-first: the portrait-oriented asset is the default,
+   * overridden to the landscape asset at the same `md` breakpoint
+   * already used elsewhere (JournalDetail.tsx).
+   */
+  --login-bg-image: url("/auth-background-mobile.png");
+}
+
+@media (min-width: 768px) {
+  :root {
+    --login-bg-image: url("/auth-background.png");
+  }
 }
 
 @media (prefers-color-scheme: dark) {

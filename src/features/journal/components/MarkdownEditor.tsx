@@ -2,10 +2,14 @@
 
 import "@uiw/react-md-editor/markdown-editor.css";
 import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { journalEditorCommands } from "./editorCommands";
 import { safeMarkdownUrlTransform } from "./safeMarkdownUrlTransform";
 
-const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
+const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
+    ssr: false,
+    loading: () => <Skeleton className="h-[55vh] w-full rounded-lg" />,
+});
 
 interface MarkdownEditorProps {
     value: string;
@@ -35,6 +39,14 @@ interface MarkdownEditorProps {
  * and switches with the `prefers-color-scheme` media query — the same
  * signal `globals.css` uses for the rest of the app's dark mode, and
  * there's no manual light/dark toggle here to keep in sync with.
+ *
+ * `height` is a viewport-relative unit rather than a fixed pixel value
+ * so the editor scales down on its own on a short viewport (a landscape
+ * phone, or a portrait one with the on-screen keyboard open) — no
+ * breakpoint or JS media-query check needed for that. (A `%` height
+ * would need one instead: the library's own docs note `visibleDragbar`
+ * breaks under a percentage height, which `vh` isn't subject to since
+ * it's relative to the viewport, not the parent.)
  */
 export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     return (
@@ -43,7 +55,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
                 value={value}
                 onChange={onChange}
                 preview="edit"
-                height={480}
+                height="55vh"
                 commands={journalEditorCommands}
                 textareaProps={{ "aria-label": "Journal content (Markdown)" }}
                 previewOptions={{ skipHtml: true, urlTransform: safeMarkdownUrlTransform }}

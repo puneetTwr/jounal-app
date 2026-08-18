@@ -150,7 +150,7 @@ export function SearchAndFilterBar({
                             type="button"
                             aria-pressed={isActive}
                             onClick={() => handleFlagToggle(key, !isActive)}
-                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-meta font-medium ${
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-meta font-medium ${
                                 isActive
                                     ? "border-accent bg-accent/15 text-accent"
                                     : "border-border text-muted-foreground hover:bg-muted-foreground/10"
@@ -166,7 +166,7 @@ export function SearchAndFilterBar({
                     <button
                         type="button"
                         onClick={handleClearFilters}
-                        className="ml-auto inline-flex items-center gap-1 text-meta font-medium text-muted-foreground hover:text-foreground"
+                        className="ml-auto inline-flex items-center gap-1 rounded px-2 py-2 text-meta font-medium text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
                     >
                         <X className="h-3.5 w-3.5" aria-hidden="true" />
                         Clear filters

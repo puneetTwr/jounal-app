@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                     // floating input stays readable — the image itself
                     // is left almost untouched everywhere else.
                     backgroundImage:
-                        "linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(6,4,3,0.4) 88%, rgba(6,4,3,0.55) 100%), url('/auth-background.png')",
+                        "linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(6,4,3,0.4) 88%, rgba(6,4,3,0.55) 100%), var(--login-bg-image)",
                 }}
                 aria-hidden="true"
             />

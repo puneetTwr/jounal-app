@@ -78,7 +78,7 @@ export function TagsInput({ tags, onChange, disabled = false }: TagsInputProps) 
                                 type="button"
                                 onClick={() => removeTag(tag)}
                                 disabled={disabled}
-                                className="rounded-full p-0.5 text-muted-foreground hover:bg-muted-foreground/20 hover:text-foreground disabled:pointer-events-none"
+                                className="rounded-full p-1.5 text-muted-foreground hover:bg-muted-foreground/20 hover:text-foreground disabled:pointer-events-none"
                                 aria-label={`Remove tag ${tag}`}
                             >
                                 <X className="h-3 w-3" aria-hidden="true" />

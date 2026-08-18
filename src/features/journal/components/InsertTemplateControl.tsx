@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Loader2 } from "lucide-react";
+import { AlertCircle, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { getTemplateAction, listTemplatesAction } from "@/features/template/actions";
 import type { TemplateEntry } from "@/features/template/types";
@@ -53,34 +53,44 @@ export function InsertTemplateControl({ frontMatter, onInsert }: InsertTemplateC
     const [isOpen, setIsOpen] = useState(false);
     const [templates, setTemplates] = useState<TemplateEntry[] | null>(null);
     const [isInserting, setIsInserting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     function handleOpen() {
         setIsOpen(true);
 
         if (templates === null) {
-            listTemplatesAction().then(setTemplates);
+            setError(null);
+            listTemplatesAction()
+                .then(setTemplates)
+                .catch(() => setError("Couldn't load templates. Try again."));
         }
     }
 
     async function handleSelect(templateId: string) {
         setIsInserting(true);
+        setError(null);
 
-        const template = await getTemplateAction(templateId);
+        try {
+            const template = await getTemplateAction(templateId);
 
-        if (template) {
-            const variables = {
-                title: frontMatter.title,
-                journalDate: frontMatter.journalDate,
-                createdAt: frontMatter.createdAt,
-                updatedAt: frontMatter.updatedAt,
-                ...deriveDateParts(frontMatter.journalDate),
-            };
+            if (template) {
+                const variables = {
+                    title: frontMatter.title,
+                    journalDate: frontMatter.journalDate,
+                    createdAt: frontMatter.createdAt,
+                    updatedAt: frontMatter.updatedAt,
+                    ...deriveDateParts(frontMatter.journalDate),
+                };
 
-            onInsert(applyTemplateVariables(template.content, variables));
+                onInsert(applyTemplateVariables(template.content, variables));
+            }
+
+            setIsOpen(false);
+        } catch {
+            setError("Couldn't insert this template. Try again.");
+        } finally {
+            setIsInserting(false);
         }
-
-        setIsInserting(false);
-        setIsOpen(false);
     }
 
     if (!isOpen) {
@@ -98,7 +108,12 @@ export function InsertTemplateControl({ frontMatter, onInsert }: InsertTemplateC
 
     return (
         <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
-            {templates === null ? (
+            {error ? (
+                <p role="alert" className="flex items-center gap-1.5 text-body text-danger">
+                    <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                    {error}
+                </p>
+            ) : templates === null ? (
                 <p className="flex items-center gap-1.5 text-body text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                     Loading templates…

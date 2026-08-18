@@ -33,9 +33,9 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-y-2">
         <h1 className="text-page-title font-bold">Journal</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           {isGitFeatureAvailable && (
             <div className="flex items-center gap-1 border-r border-border pr-4">
               <RestoreFromGitButton isConfigured={isGitConfigured} />

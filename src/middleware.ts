@@ -8,7 +8,9 @@ const LOGIN_PATH = "/login";
 
 /** Paths that must stay reachable without a session, so the login screen itself can load. */
 function isPublicPath(pathname: string): boolean {
-    return pathname === LOGIN_PATH || pathname === "/auth-background.png";
+    return (
+        pathname === LOGIN_PATH || pathname === "/auth-background.png" || pathname === "/auth-background-mobile.png"
+    );
 }
 
 export async function middleware(request: NextRequest) {

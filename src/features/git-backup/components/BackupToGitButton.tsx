@@ -40,7 +40,7 @@ export function BackupToGitButton({ isConfigured }: BackupToGitButtonProps) {
     }, []);
 
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
             {status !== "idle" && (
                 <p
                     role={status === "error" ? "alert" : "status"}
@@ -55,7 +55,7 @@ export function BackupToGitButton({ isConfigured }: BackupToGitButtonProps) {
                 disabled={!isConfigured || isPending}
                 title="Backup to Git"
                 aria-label="Backup to Git"
-                className="rounded-full p-2 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+                className="rounded-full p-2.5 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
             >
                 {isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

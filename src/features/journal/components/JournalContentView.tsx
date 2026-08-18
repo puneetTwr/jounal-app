@@ -2,11 +2,12 @@
 
 import "@uiw/react-md-editor/markdown-editor.css";
 import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { safeMarkdownUrlTransform } from "./safeMarkdownUrlTransform";
 
 const MarkdownPreview = dynamic(
     () => import("@uiw/react-md-editor").then((mod) => mod.default.Markdown),
-    { ssr: false }
+    { ssr: false, loading: () => <Skeleton className="h-40 w-full rounded-lg" /> }
 );
 
 interface JournalContentViewProps {

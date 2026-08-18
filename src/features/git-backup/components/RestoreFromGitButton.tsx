@@ -37,7 +37,7 @@ export function RestoreFromGitButton({ isConfigured }: RestoreFromGitButtonProps
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
             {status !== "idle" && (
                 <p
                     role={ALERT_STATUSES.has(status) ? "alert" : "status"}
@@ -55,7 +55,7 @@ export function RestoreFromGitButton({ isConfigured }: RestoreFromGitButtonProps
                 disabled={!isConfigured}
                 title="Restore from Git"
                 aria-label="Restore from Git"
-                className="rounded-full p-2 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+                className="rounded-full p-2.5 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
             >
                 <DownloadCloud className="h-4 w-4" aria-hidden="true" />
             </button>
